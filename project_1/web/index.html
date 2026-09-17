@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colorizing the Prokudin-Gorskii Photo Collection</title>
+<style>
+  :root {
+    --text: #1c1c1c;
+    --muted: #6b6b6b;
+    --bg: #ffffff;
+    --panel: #fafafa;
+    --border: #e0e0e0;
+    --accent: #9a3b3b;
+    --maxw: 1000px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    margin: 0;
+    line-height: 1.55;
+  }
+  a { color: var(--accent); }
+
+  header.hero {
+    padding: 48px 24px 28px;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  header.hero .back {
+    display: inline-block;
+    margin-bottom: 18px;
+    font-size: 0.9em;
+    color: var(--muted);
+    text-decoration: none;
+  }
+  header.hero .back:hover { color: var(--accent); }
+  header.hero h1 {
+    margin: 0 0 6px;
+    font-size: 2.1em;
+  }
+  header.hero p.subtitle {
+    margin: 0;
+    color: var(--muted);
+    font-size: 1.05em;
+  }
+  header.hero p.byline {
+    margin-top: 14px;
+    font-size: 0.95em;
+    color: var(--muted);
+  }
+
+  nav.toc {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 16px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    justify-content: center;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.92em;
+  }
+  nav.toc a { text-decoration: none; color: var(--text); }
+  nav.toc a:hover { color: var(--accent); }
+
+  main {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 10px 24px 80px;
+  }
+
+  section { padding-top: 56px; scroll-margin-top: 20px; }
+  section h2 {
+    font-size: 1.5em;
+    border-bottom: 2px solid var(--text);
+    padding-bottom: 8px;
+    margin-bottom: 6px;
+  }
+  section > p.section-intro {
+    color: var(--muted);
+    margin-top: 6px;
+    margin-bottom: 28px;
+    font-size: 0.95em;
+  }
+  h3.subhead {
+    font-size: 1.15em;
+    margin: 36px 0 6px;
+  }
+  h4.item-head {
+    font-size: 1.05em;
+    margin: 40px 0 4px;
+    color: var(--accent);
+  }
+
+  .gallery img,
+  .compare img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  /* --- gallery grid --- */
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 22px;
+    margin: 16px 0 8px;
+  }
+  .gallery.wide { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  figure { margin: 0; }
+  figcaption {
+    margin-top: 8px;
+    font-size: 0.88em;
+  }
+  figcaption .fname {
+    font-weight: 600;
+  }
+  figcaption .offsets {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 0.92em;
+  }
+
+  /* --- side-by-side comparison (single-scale, before/after) --- */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    margin: 16px 0 8px;
+  }
+  .compare figcaption { text-align: center; }
+  p.compare-label {
+    margin: 22px 0 4px;
+    font-size: 0.85em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  @media (max-width: 560px) {
+    .compare { grid-template-columns: 1fr; }
+  }
+
+  .bw-block {
+    border-top: 1px solid var(--border);
+    padding-top: 6px;
+  }
+
+  /* --- finished writeup content (not a placeholder) --- */
+  .content { margin: 10px 0 22px; }
+  .content p { margin: 0 0 10px; }
+  .content ul, .content ol { margin: 6px 0 14px; padding-left: 22px; }
+  .content ul ul, .content ol ol, .content ul ol, .content ol ul { margin: 4px 0; }
+  .content li { margin: 4px 0; }
+  .content blockquote {
+    margin: 10px 0 18px;
+    padding: 10px 16px;
+    border-left: 3px solid var(--accent);
+    background: var(--panel);
+    color: var(--muted);
+  }
+  .content blockquote p { margin: 0; }
+  .content h5.comments-head {
+    margin: 18px 0 4px;
+    font-size: 0.9em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  footer {
+    text-align: center;
+    padding: 30px 24px 50px;
+    color: var(--muted);
+    font-size: 0.85em;
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <a class="back" href="../../index.html">&larr; Back to Portfolio</a>
+  <h1>Colorizing the Prokudin-Gorskii Photo Collection</h1>
+  <p class="subtitle">CS180 / CS280A &middot; Project 1</p>
+  <p class="byline">Hanjoo Kim</p>
+</header>
+
+<nav class="toc">
+  <a href="#approach">Approach</a>
+  <a href="#single-scale">Single-Scale</a>
+  <a href="#multi-scale">Multi-Scale (All 14)</a>
+  <a href="#extra-examples">Extra Examples</a>
+  <a href="#failures">Failure Cases</a>
+  <a href="#bells-whistles">Bells &amp; Whistles</a>
+</nav>
+
+<main>
+
+  <!-- ============================================================ -->
+  <section id="approach">
+    <h3 class="subhead">Note</h3>
+
+    <div class="content">
+      <blockquote><p>All results are a result of fixing Green as the reference plate and shifting B and R to find optimal shifts</p></blockquote>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="single-scale">
+    <h2>Single-Scale Alignment (Low-Resolution JPEGs)</h2>
+    <p class="section-intro">Results of the naive, single-scale exhaustive search on <code>cathedral.jpg</code>, <code>monastery.jpg</code>, and <code>tobolsk.jpg</code>, using NCC as the matching metric.</p>
+
+    <div class="content">
+      <h4 class="item-head">Scoring NCC</h4>
+      <ol>
+        <li>Flattens two patches (1D vector) from each channel</li>
+        <li>Subtracts mean for each patch, removing the brightness offset between the two</li>
+        <li>Compute normalized cross-correlation by dividing their dot product by the product of their L2 norms:
+          <ol>
+            <li>Dot product: np.sum(a*b)</li>
+            <li>Norm product: np.linalg.norm(a) * np.linalg.norm(b)</li>
+            <li>The resulting score lies between [-1,1], with larger values indicating stronger similarity</li>
+          </ol>
+        </li>
+      </ol>
+
+      <h4 class="item-head">Align</h4>
+      <ol>
+        <li>Takes one fixed channel and a channel to shift.
+          <ol>
+            <li>(conditional - only on multi-scale) The image is 'np.roll'ed by the [dy,dx] taken from the previous level's search in shift</li>
+          </ol>
+        </li>
+        <li>A fixed cropped location is extracted from both the shifted channel and the reference channel for scoring
+          <ol>
+            <li>Margin is 10% of the image, with the search_radius as the minimum.</li>
+          </ol>
+        </li>
+        <li>The NCC is calculated between the two crops while shifting
+          <ol>
+            <li>Exhaustively tries all shifts in search_radius [dy,dx] and calculates the NCC</li>
+          </ol>
+        </li>
+        <li>The [dy,dx] with the highest score is selected as the best shift match</li>
+      </ol>
+      <h5 class="comments-head">Comments:</h5>
+      <ul>
+        <li>The cropping
+          <ul>
+            <li>It is scored after cropping so that the border that is not part of the actual image does not corrupt the scoring</li>
+            <li>After looking at the data, a 10% of the image on each side seemed an appropriate size to crop out, as it retains most information of the image while clearing the borders</li>
+            <li>The magnitude of the search radius is set as the minimum crop margin, it is a safeguard against the roll, but it is expected at most times that the 10% will be taken</li>
+          </ul>
+        </li>
+        <li>Multi-scale consideration
+          <ul>
+            <li>The initial [0,0] alignment should be translated using the optimal shift found in the previous pyramid level</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="gallery">
+      <figure>
+        <img src="media/single_scale_ncc/cathedral.jpg" alt="cathedral aligned result" loading="lazy">
+        <figcaption><span class="fname">cathedral.jpg</span><span class="offsets">B: (dy: -5, dx: -2)&nbsp;&nbsp;R: (dy: 7, dx: 1)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/single_scale_ncc/monastery.jpg" alt="monastery aligned result" loading="lazy">
+        <figcaption><span class="fname">monastery.jpg</span><span class="offsets">B: (dy: 3, dx: -2)&nbsp;&nbsp;R: (dy: 6, dx: 1)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/single_scale_ncc/tobolsk.jpg" alt="tobolsk aligned result" loading="lazy">
+        <figcaption><span class="fname">tobolsk.jpg</span><span class="offsets">B: (dy: -3, dx: -3)&nbsp;&nbsp;R: (dy: 4, dx: 1)</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="multi-scale">
+    <h2>Multi-Scale Pyramid Alignment (All 14 Provided Images)</h2>
+    <p class="section-intro">Coarse-to-fine pyramid results (NCC, computed on raw RGB pixel values) for every provided glass plate scan.</p>
+
+    <div class="content">
+      <h3 class="subhead">Downscale and Align</h3>
+      <ol>
+        <li>Builds an image pyramid for all three channels by repeated downsampling at scale=0.5 with anti-aliasing.</li>
+        <li>Pyramid depth is decided relative to the resolution of the image
+          <ol>
+            <li>halves the image size until it drops below 200px on its shorter side (h/w)</li>
+          </ol>
+        </li>
+        <li>Searches coarse-to-finest, doubling the running [dy,dx] every return to its scale above and halving the search_radius at each step down.</li>
+        <li>Results in a local optimum [dy,dx] shift in each of B and R to match against green</li>
+      </ol>
+      <h5 class="comments-head">Comments</h5>
+      <ul>
+        <li>An adaptive pyramid depth was used because it was noticed that at a relatively high fixed depth, the doubling of the [dy,dx] had an immense effect on the results of smaller images (jpgs)</li>
+        <li>The experiment initially started with Blue as the fixed reference, but the resulting image was similar to the incorrect emir example on the Project 1 deliverables
+          <ul>
+            <li>Changing the fixed reference to Green showed better results by through visual inspection</li>
+          </ul>
+        </li>
+        <li>Initially, the search radius after the first one was fixed at a small number (e.g. 20px → 3px → 3px), but it seemed to strict on images that had deep pyramid levels as they get stuck on a wrong shift. Hence a looser 'halving search radius' method was taken that resulted in better performance (e.g. 20px → 10px → 5px).</li>
+      </ul>
+    </div>
+
+    <div class="gallery">
+      <figure>
+        <img src="media/multiscale_ncc/cathedral.jpg" alt="cathedral aligned result" loading="lazy">
+        <figcaption><span class="fname">cathedral</span><span class="offsets">B: (dy: -5, dx: -2)&nbsp;&nbsp;R: (dy: 7, dx: 1)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/multiscale_ncc/monastery.jpg" alt="monastery aligned result" loading="lazy">
+        <figcaption><span class="fname">monastery</span><span class="offsets">B: (dy: 3, dx: -2)&nbsp;&nbsp;R: (dy: 6, dx: 1)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/multiscale_ncc/tobolsk.jpg" alt="tobolsk aligned result" loading="lazy">
+        <figcaption><span class="fname">tobolsk</span><span class="offsets">B: (dy: -3, dx: -3)&nbsp;&nbsp;R: (dy: 4, dx: 1)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/multiscale_ncc/emir.jpg" alt="emir aligned result" loading="lazy">
+        <figcaption><span class="fname">emir</span><span class="offsets">B: (dy: -50, dx: -24)&nbsp;&nbsp;R: (dy: 56, dx: 18)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/multiscale_ncc/church.jpg" alt="church aligned result" loading="lazy">
+        <figcaption><span class="fname">church</span><span class="offsets">B: (dy: -26, dx: -4)&nbsp;&nbsp;R: (dy: 34, dx: -8)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/multiscale_ncc/harvesters.jpg" alt="harvesters aligned result" loading="lazy">
+        <figcaption><span class="fname">harvesters</span><span class="offsets">B: (dy: -60, dx: -16)&nbsp;&nbsp;R: (dy: 64, dx: -2)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/multiscale_ncc/icon.jpg" alt="icon aligned result" loading="lazy">
+        <figcaption><span class="fname">icon</span><span class="offsets">B: (dy: -40, dx: -16)&nbsp;&nbsp;R: (dy: 48, dx: 6)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/multiscale_ncc/ilemselga.jpg" alt="ilemselga aligned result" loading="lazy">
+        <figcaption><span class="fname">ilemselga</span><span class="offsets">B: (dy: -40, dx: -8)&nbsp;&nbsp;R: (dy: 90, dx: 4)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/multiscale_ncc/melons.jpg" alt="melons aligned result" loading="lazy">
+        <figcaption><span class="fname">melons</span><span class="offsets">B: (dy: -82, dx: -10)&nbsp;&nbsp;R: (dy: 96, dx: 4)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/multiscale_ncc/religous_painting.jpg" alt="religous_painting aligned result" loading="lazy">
+        <figcaption><span class="fname">religous_painting</span><span class="offsets">B: (dy: -28, dx: -3)&nbsp;&nbsp;R: (dy: 41, dx: 4)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/multiscale_ncc/self_portrait.jpg" alt="self_portrait aligned result" loading="lazy">
+        <figcaption><span class="fname">self_portrait</span><span class="offsets">B: (dy: -78, dx: -28)&nbsp;&nbsp;R: (dy: 98, dx: 8)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/multiscale_ncc/siren.jpg" alt="siren aligned result" loading="lazy">
+        <figcaption><span class="fname">siren</span><span class="offsets">B: (dy: -50, dx: 6)&nbsp;&nbsp;R: (dy: 46, dx: -18)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/multiscale_ncc/three_generations.jpg" alt="three_generations aligned result" loading="lazy">
+        <figcaption><span class="fname">three_generations</span><span class="offsets">B: (dy: -54, dx: -14)&nbsp;&nbsp;R: (dy: 58, dx: -2)</span></figcaption>
+      </figure>
+      <figure>
+        <img src="media/multiscale_ncc/wharf.jpg" alt="wharf aligned result" loading="lazy">
+        <figcaption><span class="fname">wharf</span><span class="offsets">B: (dy: -16, dx: 6)&nbsp;&nbsp;R: (dy: 68, dx: -8)</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="extra-examples">
+    <h2>Additional Examples (My Own Selections)</h2>
+    <p class="section-intro">3+ images of my choosing, downloaded from the <a href="https://www.loc.gov/collections/prokudin-gorskii/">Prokudin-Gorskii collection</a> at the Library of Congress, run through the same multi-scale pipeline.</p>
+
+    <div class="gallery wide">
+      <figure>
+        <img src="media/extra_examples/camel_man.jpg" alt="camel_man aligned result" loading="lazy">
+        <figcaption><span class="fname">camel_man</span><span class="offsets">B: (dy: -56, dx: -20)&nbsp;&nbsp;R: (dy: 60, dx: 8)</span><br><a href="https://www.loc.gov/item/2018681297/">loc.gov/item/2018681297</a></figcaption>
+      </figure>
+      <figure>
+        <img src="media/extra_examples/railroad.jpg" alt="railroad aligned result" loading="lazy">
+        <figcaption><span class="fname">railroad</span><span class="offsets">B: (dy: -66, dx: -10)&nbsp;&nbsp;R: (dy: 76, dx: -4)</span><br><a href="https://www.loc.gov/item/2018679526/">loc.gov/item/2018679526</a></figcaption>
+      </figure>
+      <figure>
+        <img src="media/extra_examples/master-pnp-prok-00200-00228a.jpg" alt="master-pnp-prok-00200-00228a aligned result" loading="lazy">
+        <figcaption><span class="fname">master-pnp-prok-00200-00228a</span><span class="offsets">B: (dy: -14, dx: -26)&nbsp;&nbsp;R: (dy: 72, dx: 24)</span><br><a href="https://www.loc.gov/item/2018679151/">loc.gov/item/2018679151</a></figcaption>
+      </figure>
+    </div>
+    <div class="content">
+      <p><strong>Why I picked these examples:</strong></p>
+      <ul>
+        <li>camel_man:
+          <ul>
+            <li>The image had a mostly flat, low-texture background, hence wanted to test if the algorithm is robust against near-uniform backgrounds</li>
+          </ul>
+        </li>
+        <li>For the others, it was all about the aesthetics :)</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="failures">
+    <h2>Failure Cases</h2>
+    <p class="section-intro">Up to one of the 14 provided images (excluding my own picks) is allowed to be misaligned &mdash; explain why it fails, if applicable.</p>
+
+    <div class="content">
+      <blockquote><p><strong>14 Images - no clear alignment failures were observed</strong></p></blockquote>
+      <blockquote><p><strong>Extra 3 Images - no clear alignment failures were observed</strong></p></blockquote>
+      <p>There were splotches that seemed suspicious, but they are likely caused by artifacts on the glass plate or subject motion</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="bells-whistles">
+    <h2>Bells &amp; Whistles</h2>
+    <p class="section-intro">Mandatory for CS280A, extra credit for CS180. For each trick: motivation, approach, and before/after results.</p>
+
+    <!-- Automatic cropping -->
+    <div class="bw-block">
+      <h4 class="item-head">Automatic Cropping</h4>
+      <div class="content">
+        <blockquote><p><strong>Sequential / Hybrid Method</strong><br>
+        Used the Sobel gradient-energy detection to search for edges of the actual image and searched inwards from the edge of the whole image.<br>
+        Along with Sobel, searched for dark rows from the edge of the whole image to target the black borders.</p></blockquote>
+        <ol>
+          <li>find_black_border / auto_crop_black:
+            <ol>
+              <li>Using a grayscale of the image.</li>
+              <li>Separately scans for a run of mostly-dark rows/ columns near each edge, getting rid of the plate's black borders</li>
+            </ol>
+          </li>
+          <li>detect_borders / auto_crop:
+            <ol>
+              <li>(For each channel) Computed Sobel gradient-energy per row/column</li>
+              <li>It finds the local maximum in a bandwidth of 10% of the image, which would indicate an edge (ideally of the real image)</li>
+              <li>Compiles the edges found from each channel and takes the intersection box for the final crop</li>
+            </ol>
+          </li>
+          <li>Both are applied in that order to get the final crop</li>
+        </ol>
+      </div>
+      <p class="compare-label">emir</p>
+      <div class="compare">
+        <figure>
+          <img src="media/multiscale_ncc/emir.jpg" alt="emir before cropping" loading="lazy">
+          <figcaption>Before (raw pyramid stack)</figcaption>
+        </figure>
+        <figure>
+          <img src="media/bells_whistles/cropped_emir.jpg" alt="emir after cropping" loading="lazy">
+          <figcaption>After (cropped)</figcaption>
+        </figure>
+      </div>
+      <p class="compare-label">cathedral</p>
+      <div class="compare">
+        <figure>
+          <img src="media/multiscale_ncc/cathedral.jpg" alt="cathedral before cropping" loading="lazy">
+          <figcaption>Before (raw pyramid stack)</figcaption>
+        </figure>
+        <figure>
+          <img src="media/bells_whistles/cropped_cathedral.jpg" alt="cathedral after cropping" loading="lazy">
+          <figcaption>After (cropped)</figcaption>
+        </figure>
+      </div>
+      <div class="content">
+        <h5 class="comments-head">Comments</h5>
+        <ul>
+          <li>Glass plate crops:
+            <ul>
+              <li>The search band was restricted to 10%, which was a restraint attempting to prevent over-cropping into plain background of the actual image (e.g. skies)</li>
+              <li>The colored letters in the black borders that triggered the spike-detection and would prevent cropping from proceeding into the image content. Hence, built another detector that explicitly crops out the black borders</li>
+              <li>Since the algorithm was applied to all channels and compiled using the intersection, I could effectively cut out the meaningless color plate edges and extract the meaningfully part of the image that stacks.</li>
+            </ul>
+          </li>
+          <li>Black border cropping:
+            <ul>
+              <li>This algorithm tries to detect a continuous strip of black starting from the edge of the whole image. For rows/columns that have a darkness level that persists for a minimum run, I trust it to be a black border.</li>
+              <li>Avoid setting the threshold to make it too dark, as the numbers make the strip less darker, hence would not be considered black at a low threshold</li>
+              <li>It is robust against bursts of bright strips as there is a minimum run threshold. However, once it finds that it is a border (surpasses minimum run), then the next row/column that isn't dark will be considered the other end of the black border.</li>
+              <li>However it may be weak against the bursts of bright strips after a black border has been determined.</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Automatic white balance -->
+    <div class="bw-block">
+      <h4 class="item-head">Automatic White Balance</h4>
+      <div class="content">
+        <ol>
+          <li>Computes each channel's mean, and the overall gray mean across all three</li>
+          <li>Scales each channel so its mean matches that overall gray mean</li>
+        </ol>
+      </div>
+      <p class="compare-label">emir</p>
+      <div class="compare">
+        <figure>
+          <img src="media/bells_whistles/cropped_emir.jpg" alt="emir before white balance" loading="lazy">
+          <figcaption>Before (cropped)</figcaption>
+        </figure>
+        <figure>
+          <img src="media/bells_whistles/white_balanced_emir.jpg" alt="emir after white balance" loading="lazy">
+          <figcaption>After (white balanced)</figcaption>
+        </figure>
+      </div>
+      <p class="compare-label">cathedral</p>
+      <div class="compare">
+        <figure>
+          <img src="media/bells_whistles/cropped_cathedral.jpg" alt="cathedral before white balance" loading="lazy">
+          <figcaption>Before (cropped)</figcaption>
+        </figure>
+        <figure>
+          <img src="media/bells_whistles/white_balanced_cathedral.jpg" alt="cathedral after white balance" loading="lazy">
+          <figcaption>After (white balanced)</figcaption>
+        </figure>
+      </div>
+      <div class="content">
+        <h5 class="comments-head">Comments:</h5>
+        <ul>
+          <li>This is based on the gray-world assumption: where in a real scene, colors should average out almost to neutral, so a channel whose average is off the gray mean is read as evidence of a color cast and corrected back toward the others.</li>
+          <li>This has to run after cropping, because color borders that are not part of the actual image may skew the means of each channel.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Automatic contrasting -->
+    <div class="bw-block">
+      <h4 class="item-head">Automatic Contrasting</h4>
+      <div class="content">
+        <ol>
+          <li>Used PIL.ImageOps.autocontrast with cutoff =2, which ignores the most extreme 2% of pixels on each end before stretching the remaining range to fill [0,255]</li>
+        </ol>
+      </div>
+      <p class="compare-label">emir</p>
+      <div class="compare">
+        <figure>
+          <img src="media/bells_whistles/white_balanced_emir.jpg" alt="emir before contrasting" loading="lazy">
+          <figcaption>Before (white balanced)</figcaption>
+        </figure>
+        <figure>
+          <img src="media/bells_whistles/contrasted_emir.jpg" alt="emir after contrasting" loading="lazy">
+          <figcaption>After (contrasted)</figcaption>
+        </figure>
+      </div>
+      <p class="compare-label">cathedral</p>
+      <div class="compare">
+        <figure>
+          <img src="media/bells_whistles/white_balanced_cathedral.jpg" alt="cathedral before contrasting" loading="lazy">
+          <figcaption>Before (white balanced)</figcaption>
+        </figure>
+        <figure>
+          <img src="media/bells_whistles/contrasted_cathedral.jpg" alt="cathedral after contrasting" loading="lazy">
+          <figcaption>After (contrasted)</figcaption>
+        </figure>
+      </div>
+      <div class="content">
+        <h5 class="comments-head">Comments:</h5>
+        <ul>
+          <li>I chose a percentile instead the min/max to stretch the image, as there could be extremities in the image (black borders and whites) that falsely indicates the true contrast.</li>
+          <li>Hence, this method also has to run after cropping.</li>
+          <li>However, the higher contrast in the image overly highlighted some tones in the image.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Better color mapping -->
+    <div class="bw-block">
+      <h4 class="item-head">Better Color Mapping</h4>
+      <div class="content">
+        <blockquote><p>Used my religious painting's result against the ground truth result on LOC to calculate a color mapping matrix.<br>
+        This matrix was then used to map the emir example to the estimated real RGB</p></blockquote>
+        <p>The bells and whistles are applied sequentially: Automatic Cropping &rarr; Automatic White Balance &rarr; Automatic Contrasting &rarr; Better Color Mapping.</p>
+        <ol>
+          <li>Loaded my own aligned religious_painting result, and the Library of Congress's official professionally-restored version of the same photo, as a color reference</li>
+          <li>Manually labelled bboxes of different color patches in the image using ply.ginput()
+            <ol>
+              <li>blue robe, gold robe, green robe, white robe, red robe, door, wall</li>
+            </ol>
+          </li>
+          <li>Converted each bbox into a cropped region, and averaged pixels in each region to get one representative color per patch, per image</li>
+          <li>Solved for a 3x3 matrix that best maps my patch colors onto the reference's patch colors, using least-squares - np.linalg.lstsq()</li>
+          <li>Applied that matrix to a different image (emir), to test the results</li>
+        </ol>
+      </div>
+      <p class="compare-label">emir</p>
+      <div class="compare">
+        <figure>
+          <img src="media/multiscale_ncc/emir.jpg" alt="emir with direct RGB mapping" loading="lazy">
+          <figcaption>Before (direct RGB mapping)</figcaption>
+        </figure>
+        <figure>
+          <img src="media/bells_whistles/color_mapped_emir.jpg" alt="emir with fitted color mapping" loading="lazy">
+          <figcaption>After (fitted color mapping)</figcaption>
+        </figure>
+      </div>
+      <p class="compare-label">cathedral</p>
+      <div class="compare">
+        <figure>
+          <img src="media/multiscale_ncc/cathedral.jpg" alt="cathedral with direct RGB mapping" loading="lazy">
+          <figcaption>Before (direct RGB mapping)</figcaption>
+        </figure>
+        <figure>
+          <img src="media/bells_whistles/color_mapped_cathedral.jpg" alt="cathedral with fitted color mapping" loading="lazy">
+          <figcaption>After (fitted color mapping)</figcaption>
+        </figure>
+      </div>
+      <figure style="margin-top: 22px;">
+        <img src="media/bells_whistles/color_map_labels.png" alt="patch samples used to fit the color mapping matrix, mine vs. reference" loading="lazy">
+        <figcaption style="text-align:center;">Patches sampled from my own <code>religous_painting</code> result (left) vs. the <a href="https://www.loc.gov/resource/ppem.01343/">LoC reference restoration</a> (right), used to fit the 3&times;3 color matrix.</figcaption>
+      </figure>
+      <div class="content">
+        <h5 class="comments-head">Comments:</h5>
+        <ul>
+          <li>There's no reason to assume the RGB filters in Prokudin-Gorskii actually used in the 1900s line up exactly with a modern display's RGB. A 3x3 matrix lets each output channel be a blend of all three input channels, which can correct for that cross-channel mismatch in a way a per-channel-only correction (such as white balancing) cannot</li>
+          <li>In order to calculate this matrix, I needed a real ground truth image to use against my own image. The religious_painting was chosen to calculate this matrix as there were simple, almost definite colors that could be used for mapping</li>
+          <li>The results showed that the color mapping had succeeded, but the tone of the image became very warm overall. This is suspected to be a cause of the label areas from each image to not be equal as each image was labeled separately, hence the mapped pixels were not exactly the same location</li>
+          <li>A solution to this would be to make the location of the bboxes identical, perhaps translating the bboxes from one image mathematically to the other.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Better features -->
+    <div class="bw-block">
+      <h4 class="item-head">Better Features</h4>
+      <div class="content">
+        <blockquote><p>Tried using the Sobel gradient-magnitude edge maps instead of RGB to map the shifts</p></blockquote>
+        <ol>
+          <li>Computed a Sobel gradient-magnitude edge maps for each channel</li>
+          <li>Ran the edge maps into downscale_and_align to score using NCC</li>
+        </ol>
+      </div>
+      <div class="compare">
+        <figure>
+          <img src="media/multiscale_ncc/emir.jpg" alt="emir aligned on raw pixel values" loading="lazy">
+          <figcaption>Raw-pixel alignment</figcaption>
+        </figure>
+        <figure>
+          <img src="media/bells_whistles/edge_aligned_emir.jpg" alt="emir aligned on Sobel edge maps" loading="lazy">
+          <figcaption>Edge/gradient-based alignment</figcaption>
+        </figure>
+      </div>
+      <div class="content">
+        <h5 class="comments-head">Comments:</h5>
+        <ul>
+          <li>Noted from the assignment notes that the different channels don't share the same brightness.</li>
+          <li>Hence, it was assumed that structure could be a more robust matching feature instead of RGB values</li>
+          <li>Although I did see similar results to the raw-intensity similarities, it did seem that when using the same pyramid method, the edges were less robust to the downsampling and was blurred away, at coarse levels.</li>
+          <li>A solution could be to apply Sobel at every pyramid level, before calculating the NCC</li>
+        </ul>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<footer>
+  Hanjoo Kim &middot; CS180/CS280A Project 1 &middot; Fall 2026
+</footer>
+
+</body>
+</html>
