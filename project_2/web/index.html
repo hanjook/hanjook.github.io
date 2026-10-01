@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fun with Filters and Frequencies</title>
+<!--
+  HOW TO FILL THIS IN
+  - Every commentary slot is a <div class="notes"> ... </div>.
+    Delete the <p class="ph">...</p> placeholder inside it and write normal
+    <p>, <ul>, <ol> content. Styling for those is already handled.
+  - Missing images are <div class="missing">...</div>. Replace the whole div with
+      <figure><img src="media/NAME.jpg" alt="..." loading="lazy"><figcaption>...</figcaption></figure>
+  - Any <img> inside <main> can be clicked to open full-size.
+-->
+<style>
+  :root {
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --bg: #ffffff;
+    --panel: #f6f6f4;
+    --border: #e3e3e0;
+    --accent: #9a3b3b;
+    --accent-soft: #f5eaea;
+    --code-bg: #1f2227;
+    --code-text: #e6e6e6;
+    --maxw: 1080px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    margin: 0;
+    line-height: 1.6;
+  }
+  a { color: var(--accent); }
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.9em; }
+  p code, li code, td code {
+    background: var(--panel);
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  /* ---------- header + nav ---------- */
+  header.hero {
+    padding: 52px 24px 30px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  header.hero .back {
+    display: inline-block;
+    margin-bottom: 18px;
+    font-size: 0.9em;
+    color: var(--muted);
+    text-decoration: none;
+  }
+  header.hero .back:hover { color: var(--accent); }
+  header.hero h1 { margin: 0 0 6px; font-size: 2.2em; letter-spacing: -0.01em; }
+  header.hero .subtitle { margin: 0; color: var(--muted); }
+  header.hero .byline { margin: 12px 0 0; color: var(--muted); font-size: 0.95em; }
+
+  nav.toc {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border);
+  }
+  nav.toc .inner {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 10px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    justify-content: center;
+    font-size: 0.88em;
+  }
+  nav.toc a { text-decoration: none; color: var(--text); white-space: nowrap; }
+  nav.toc a:hover { color: var(--accent); }
+  nav.toc .sep { color: var(--border); }
+
+  main { max-width: var(--maxw); margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ---------- part + section headings ---------- */
+  .part-title {
+    margin: 72px 0 0;
+    padding-bottom: 10px;
+    border-bottom: 3px solid var(--text);
+    font-size: 1.9em;
+  }
+  section { padding-top: 48px; scroll-margin-top: 56px; }
+  section h2 {
+    font-size: 1.45em;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  section h2 .num { color: var(--accent); }
+  .tag {
+    font-size: 0.55em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 8px;
+    border-radius: 999px;
+    vertical-align: middle;
+  }
+  .section-intro {
+    color: var(--muted);
+    font-size: 0.95em;
+    margin: 4px 0 24px;
+    max-width: 760px;
+  }
+  h3.subhead {
+    font-size: 1.1em;
+    margin: 40px 0 12px;
+    padding-left: 10px;
+    border-left: 3px solid var(--accent);
+  }
+
+  /* ---------- figures ---------- */
+  figure { margin: 0; }
+  figure img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #fff;
+    cursor: zoom-in;
+  }
+  figcaption {
+    margin-top: 8px;
+    font-size: 0.86em;
+    color: var(--muted);
+    text-align: center;
+  }
+  figcaption strong { color: var(--text); }
+  .fig-full { margin: 14px 0 18px; }
+  .fig-narrow { max-width: 620px; margin: 14px auto 18px; }
+
+  .grid-2, .grid-3 {
+    display: grid;
+    gap: 20px;
+    margin: 14px 0 18px;
+    align-items: start;
+  }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+  /* image on one side, writing on the other */
+  .split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+    margin: 14px 0 22px;
+  }
+  .split.flip { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
+  .split.flip > figure, .split.flip > .fig-stack { order: 2; }
+  .split .notes { margin-top: 0; }
+  .fig-stack { display: grid; gap: 16px; }
+
+  /* placeholder for an image not produced yet */
+  .missing {
+    border: 2px dashed var(--border);
+    border-radius: 6px;
+    background: var(--panel);
+    color: var(--muted);
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 18px;
+    font-size: 0.9em;
+  }
+  .missing strong { color: var(--text); display: block; margin-bottom: 2px; }
+
+  /* ---------- writing blocks ---------- */
+  .q {
+    margin: 22px 0 6px;
+    font-size: 0.78em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .notes {
+    margin: 8px 0 22px;
+    padding: 14px 18px;
+    background: var(--panel);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+  }
+  .notes > :first-child { margin-top: 0; }
+  .notes > :last-child { margin-bottom: 0; }
+  .notes p { margin: 0 0 10px; }
+  .notes ul, .notes ol { margin: 6px 0 10px; padding-left: 22px; }
+  .notes li { margin: 3px 0; }
+  .notes .ph { color: #a0a0a5; font-style: italic; }
+
+  .params {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .params span {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.78em;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 7px;
+    color: var(--text);
+  }
+
+  /* ---------- code ---------- */
+  details.code { margin: 12px 0 18px; }
+  details.code summary {
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--accent);
+    padding: 4px 0;
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 16px 18px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 0.82em;
+    line-height: 1.5;
+    margin: 8px 0 0;
+  }
+  .code-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .code-grid .label {
+    font-size: 0.8em;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: -2px;
+  }
+
+  /* ---------- table ---------- */
+  table.data {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 620px;
+    margin: 10px 0 18px;
+    font-size: 0.92em;
+  }
+  table.data th, table.data td {
+    border-bottom: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+  }
+  table.data th { background: var(--panel); font-weight: 600; }
+  table.data td.blank { color: #b0b0b5; }
+
+  /* ---------- lightbox ---------- */
+  #lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(12, 12, 14, 0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 24px;
+    cursor: zoom-out;
+  }
+  #lightbox.open { display: flex; }
+  #lightbox img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 4px;
+    background: #fff;
+  }
+
+  footer {
+    text-align: center;
+    padding: 30px 24px 50px;
+    color: var(--muted);
+    font-size: 0.85em;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 760px) {
+    .split, .split.flip, .grid-2, .code-grid { grid-template-columns: 1fr; }
+    .split.flip > figure, .split.flip > .fig-stack { order: 0; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    header.hero h1 { font-size: 1.7em; }
+  }
+  @media (max-width: 480px) {
+    .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <a class="back" href="../../index.html">&larr; Back to Portfolio</a>
+  <h1>Fun with Filters and Frequencies!</h1>
+  <p class="subtitle">CS180 / CS280A &middot; Project 2</p>
+  <p class="byline">Hanjoo Kim</p>
+</header>
+
+<nav class="toc">
+  <div class="inner">
+    <a href="#p1-1">1.1 Convolution</a>
+    <a href="#p1-2">1.2 Finite Difference</a>
+    <a href="#p1-3">1.3 DoG</a>
+    <a href="#p1-bw">1 B&amp;W</a>
+    <span class="sep">|</span>
+    <a href="#p2-1">2.1 Sharpening</a>
+    <a href="#p2-2">2.2 Hybrid</a>
+    <a href="#p2-2-bw">2.2 B&amp;W</a>
+    <a href="#p2-3">2.3 Stacks</a>
+    <a href="#p2-4">2.4 Blending</a>
+    <a href="#p2-4-bw">2.4 B&amp;W</a>
+    <span class="sep">|</span>
+    <a href="#learned">Takeaway</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ================================================================ -->
+<!-- PART 1                                                            -->
+<!-- ================================================================ -->
+<h1 class="part-title">Part 1: Fun with Filters</h1>
+
+<!-- ---------------- 1.1 ---------------- -->
+<section id="p1-1">
+  <h2><span class="num">1.1</span> Convolutions from Scratch</h2>
+  <p class="section-intro">Convolution implemented with four loops and two loops (numpy only, zero padding, flipped kernel), compared against <code>scipy.signal.convolve2d</code>. Filters: 9&times;9 box, <code>D<sub>x</sub></code>, <code>D<sub>y</sub></code>.</p>
+
+  <h3 class="subhead">Code</h3>
+  <div class="code-grid">
+    <div>
+      <div class="label">Four loops</div>
+<pre><code>def convolution_4_loop(image, kernel):
+    n_rows, n_cols = image.shape
+    k_rows, k_cols = kernel.shape
+
+    convolved_image = np.zeros((n_rows, n_cols))
+
+    pad_r = k_rows // 2
+    pad_c = k_cols // 2
+    padded_image = np.zeros((n_rows + 2 * pad_r, n_cols + 2 * pad_c))
+    padded_image[pad_r:pad_r + n_rows, pad_c:pad_c + n_cols] = image
+
+    flipped_kernel = np.flip(kernel, axis=(0,1))
+
+    for ri in range(n_rows):
+        for ci in range(n_cols):
+            for rk in range(k_rows):
+                for ck in range(k_cols):
+                    curr_cell_r = ri + rk
+                    curr_cell_c = ci + ck
+                    convolved_image[ri][ci] += padded_image[curr_cell_r][curr_cell_c] * flipped_kernel[rk][ck]
+
+    return convolved_image</code></pre>
+    </div>
+    <div>
+      <div class="label">Two loops</div>
+<pre><code>def convolution_2_loop(image, kernel):
+    n_rows, n_cols = image.shape
+    k_rows, k_cols = kernel.shape
+
+    convolved_image = np.zeros((n_rows, n_cols))
+
+    pad_r = k_rows // 2
+    pad_c = k_cols // 2
+    padded_image = np.zeros((n_rows + 2 * pad_r, n_cols + 2 * pad_c))
+    padded_image[pad_r:pad_r + n_rows, pad_c:pad_c + n_cols] = image
+
+    flipped_kernel = np.flip(kernel, axis=(0,1))
+
+    for ri in range(n_rows):
+        for ci in range(n_cols):
+            image_patch = padded_image[ri:ri + k_rows, ci:ci + k_cols]
+            new_pixel = np.sum(image_patch * flipped_kernel)
+            convolved_image[ri][ci] += new_pixel
+
+    return convolved_image</code></pre>
+      <div class="label" style="margin-top:16px">Filters + SciPy</div>
+<pre><code>Dx = np.array([[1, 0, -1]])
+Dy = np.array([[1, 0, -1]]).T
+box_filter = np.ones((9,9)) / 81
+
+box_scipy_image = convolve2d(image, box_filter, mode='same')
+dx_scipy_image  = convolve2d(image, Dx, mode='same')
+dy_scipy_image  = convolve2d(image, Dy, mode='same')</code></pre>
+    </div>
+  </div>
+
+  <h3 class="subhead">Results</h3>
+  <div class="split">
+    <figure>
+      <img src="media/1_1_conv_comparison.jpg" alt="3x3 grid comparing 4-loop, 2-loop and SciPy convolution with box, Dx and Dy filters" loading="lazy">
+      <figcaption>Rows: 4 loops, 2 loops, SciPy &middot; Columns: 9&times;9 box, D<sub>x</sub>, D<sub>y</sub></figcaption>
+    </figure>
+    <div class="fig-stack">
+      <figure>
+        <img src="media/1_1_original_selfie.jpg" alt="Original grayscale selfie" loading="lazy" style="max-width:260px;margin:0 auto">
+        <figcaption>Input (grayscale, 600&times;800)</figcaption>
+      </figure>
+      <table class="data">
+        <thead><tr><th>Method</th><th>Runtime</th></tr></thead>
+        <tbody>
+          <tr><td>4 loops</td><td>10.006 s</td></tr>
+          <tr><td>2 loops</td><td>1.681 s</td></tr>
+          <tr><td><code>scipy.signal.convolve2d</code></td><td>0.035 s</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <p class="q">Runtime comparison</p>
+  <div class="notes">
+    <ul>
+      <li>The runtimes:
+      <ul>
+        <li>SciPy: 0.035s</li>
+        <li>2 Loop: 1.681s</li>
+        <li>4 Loop: 10.006s
+        </li></ul></li>
+      <li>Scipy &lt; 2 Loop &lt; 4 Loop (time of run)
+      <ul>
+        <li>It is based on how much runs on Python.</li>
+        <li>SciPy runs on a C loop, which is faster compared to running python.</li>
+        <li>4 Loop is slower than 2 Loop, because 2 Loop uses np.sum(image_patch * flipped_kernel), which runs inside NumPy’s compiled C code, while 4 loop has 2 extra for loops that runs on pure python.</li>
+      </ul></li>
+    </ul>
+  </div>
+  <p class="q">Boundary handling</p>
+  <div class="notes">
+    <ul>
+      <li>Zero padding was implemented by adding H/W - 1 of the kernel size to each corresponding row or column size of the image.
+      <ul>
+        <li>For our current example, 9x9 kernel, we would want 8 rows and columns added. Hence, 4 rows each on the top and bottom side of the image and 4 columns each on the left and right (in theory this is the case, but adding 8 rows/columns per axis would be equivalent in code).</li>
+        <li>The size of H/W - 1 is determined from the fact that extra pixels needed in convolving at the edges start from the center of the kernel.
+        </li></ul></li>
+      <li>Hence, when padding is implemented, edge pixels will be convolved with some cells of the kernel having a weight of 0, leading to pixels with lower values (darker) than pixels calculated more inside the actual image.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ---------------- 1.2 ---------------- -->
+<section id="p1-2">
+  <h2><span class="num">1.2</span> Finite Difference Operator</h2>
+  <p class="section-intro">Partial derivatives of the cameraman image with <code>D<sub>x</sub></code> and <code>D<sub>y</sub></code>, gradient magnitude, and binarized edge image.</p>
+
+  <figure class="fig-full">
+    <img src="media/1_2_cameraman_grad.jpg" alt="Cameraman original, Dx, Dy, gradient magnitude, and binarized edge image" loading="lazy">
+    <figcaption>Original &middot; &part;/&part;x &middot; &part;/&part;y &middot; Gradient magnitude &middot; Binarized edge</figcaption>
+    <div class="params"><span>threshold = 0.3</span></div>
+  </figure>
+
+  <p class="q">Threshold comparison</p>
+  <div class="grid-3">
+    <figure>
+      <img src="media/1_2_thresh_01.png" alt="Finite difference binarized edges at threshold 0.1" loading="lazy">
+      <figcaption>threshold = 0.1</figcaption>
+    </figure>
+    <figure>
+      <img src="media/1_2_thresh_03.png" alt="Finite difference binarized edges at threshold 0.3" loading="lazy">
+      <figcaption><strong>threshold = 0.3 (used above)</strong></figcaption>
+    </figure>
+    <figure>
+      <img src="media/1_2_thresh_05.png" alt="Finite difference binarized edges at threshold 0.5" loading="lazy">
+      <figcaption>threshold = 0.5</figcaption>
+    </figure>
+  </div>
+
+  <p class="q">Threshold choice &amp; tradeoff</p>
+  <div class="notes">
+    <ul>
+      <li>Thresholds of 0.1, 0.3 and 0.5 were tested.
+      <ul>
+        <li>0.1: Noisy gradient magnitudes like the grass in the image showed up. As noise has low magnitudes, 0.1 was not enough to filter them out in the binarized image.</li>
+        <li>0.3: Only the main edges (cameraman’s silhouette, parts of the buildings behind) survived, which is the edges that we are mainly interested in. However, much of the building edges have also been shaved off.</li>
+        <li>0.5 Only the really strong gradient magnitudes survived. The camera man’s coat against the background and the camera have sharp differences in pixels, which allowed some parts of it to remain.
+        </li></ul></li>
+      <li>0.3 threshold almost fully retains the cameraman, camera and it’s stand, but the building behind them have a similar pixel intensity with the sky (or background) and have mostly been filtered out. However, as the main object in the image is the cameraman, this threshold is therefore sufficient.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ---------------- 1.3 ---------------- -->
+<section id="p1-3">
+  <h2><span class="num">1.3</span> Derivative of Gaussian (DoG) Filter</h2>
+  <p class="section-intro">Gaussian built with <code>cv2.getGaussianKernel</code> and an outer product. First: blur, then finite difference. Second: a single convolution with DoG filters.</p>
+
+  <h3 class="subhead">Method A &mdash; Gaussian blur, then D<sub>x</sub> / D<sub>y</sub></h3>
+  <figure class="fig-full">
+    <img src="media/1_3_blurred_grad.jpg" alt="Blurred cameraman, Dx, Dy, gradient magnitude, and binarized edge image" loading="lazy">
+    <figcaption>Blurred &middot; &part;/&part;x &middot; &part;/&part;y &middot; Gradient magnitude &middot; Binarized edge</figcaption>
+    <div class="params"><span>Gaussian 9&times;9</span><span>threshold = 0.1</span></div>
+  </figure>
+
+  <p class="q">Threshold comparison</p>
+  <div class="grid-3">
+    <figure>
+      <img src="media/1_3a_thresh_005.png" alt="Method A binarized edges at threshold 0.05" loading="lazy">
+      <figcaption>threshold = 0.05</figcaption>
+    </figure>
+    <figure>
+      <img src="media/1_3a_thresh_01.png" alt="Method A binarized edges at threshold 0.1" loading="lazy">
+      <figcaption><strong>threshold = 0.1 (used above)</strong></figcaption>
+    </figure>
+    <figure>
+      <img src="media/1_3a_thresh_02.png" alt="Method A binarized edges at threshold 0.2" loading="lazy">
+      <figcaption>threshold = 0.2</figcaption>
+    </figure>
+  </div>
+
+  <p class="q">What differences do you see? (vs. 1.2)</p>
+  <div class="notes">
+    <ul>
+      <li>At a reasonable threshold, the binarized edges in the gaussian smoothed image are much more smoother than the edges from the original image.</li>
+      <li>Reason for it is that gaussian Smoothing smooths the image’s edges by convolving them with a filter, and the pixels that were near but not a part of the edge before now have weighted pixel magnitude from an edge pixel as well. Hence the gradient magnitude is smoothed out, which gives the smoothing effect on the binarized edges.</li>
+      <li>On the other hand, weak edges have been blurred by it’s surrounding background and were diminished through convolutions.</li>
+      <li>This can be drawn from the fact that at a lower threshold, the edges are thicker and there are still weak noise (grass) in the binarized image and vice versa. Pixels that were previously not an edge but have picked up edge pixel weights through convolution have a higher magnitude towards the edge, and lowers as it moves away. Hence, when the threshold lowers, pixels further away from the edge are still picked up, resulting in 1 (white), thus thickening the edge picked up.</li>
+      <li>Also, the optimized smooth threshold is lower than the original (0.1 &lt; 0.3) as the gaussian smoothing has smoothed the gradients (lower difference in pixel), hence naturally need a lower threshold to match the original one.</li>
+    </ul>
+  </div>
+
+  <h3 class="subhead">Method B &mdash; Single convolution with DoG filters</h3>
+  <figure class="fig-full" style="max-width:640px;margin-left:auto;margin-right:auto">
+    <img src="media/1_3_dog_filters.jpg" alt="The two 9 by 9 DoG filters: G convolved with Dx (left/right lobes) and G convolved with Dy (top/bottom lobes)" loading="lazy">
+    <figcaption>DoG filters: G &lowast; D<sub>x</sub> &middot; G &lowast; D<sub>y</sub></figcaption>
+  </figure>
+  <figure class="fig-full">
+    <img src="media/1_3_dog_grad.jpg" alt="Cameraman DoG result: Dx, Dy, gradient magnitude, and binarized edge image" loading="lazy">
+    <figcaption>Original &middot; &part;/&part;x &middot; &part;/&part;y &middot; Gradient magnitude &middot; Binarized edge</figcaption>
+    <div class="params"><span>threshold = 0.1</span></div>
+  </figure>
+
+  <p class="q">Threshold comparison</p>
+  <div class="grid-3">
+    <figure>
+      <img src="media/1_3b_thresh_005.png" alt="Method B (DoG) binarized edges at threshold 0.05" loading="lazy">
+      <figcaption>threshold = 0.05</figcaption>
+    </figure>
+    <figure>
+      <img src="media/1_3b_thresh_01.png" alt="Method B (DoG) binarized edges at threshold 0.1" loading="lazy">
+      <figcaption><strong>threshold = 0.1 (used above)</strong></figcaption>
+    </figure>
+    <figure>
+      <img src="media/1_3b_thresh_02.png" alt="Method B (DoG) binarized edges at threshold 0.2" loading="lazy">
+      <figcaption>threshold = 0.2</figcaption>
+    </figure>
+  </div>
+
+  <p class="q">Verify: same result as Method A?</p>
+  <figure style="max-width:560px">
+    <img src="media/1_3_verification.png" alt="np.array_equal on the two gradient magnitudes with a 5-pixel border cropped returns True" loading="lazy">
+  </figure>
+  <div class="notes">
+    <ul>
+      <li>Convolution is associative, which means that applying whichever convolution first does not change the output result. It is applying a weight sum of pixels to the arrays, hence does not matter whichever is applied first.</li>
+      <li>The outer 5 rows and columns (each of top, bottom, right, left) were cropped out when calculating the equivalence. This was due to each convolution of Dx and Dy on the Gaussian kernel ending up with extra rows/columns due to paddings from mode=’same’ in convolve2d. The paddings only differed because mode=’same’ of convolve2d cropped out the paddings twice on the first method and only once on the second method, hence had different pixel values in the paddings only. The rest of the image pixels were assumed to be equivalent.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ---------------- 1 B&W ---------------- -->
+<section id="p1-bw">
+  <h2><span class="num">1</span> Gradient Orientation <span class="tag">Bells &amp; Whistles</span></h2>
+  <p class="section-intro">Gradient orientation of the cameraman image, visualized with hue in HSV color space.</p>
+
+  <div class="split">
+    <figure>
+      <img src="media/1_bw_hsv.jpg" alt="Cameraman gradient orientation rendered as hue" loading="lazy">
+      <figcaption>Gradient orientation &rarr; hue</figcaption>
+    </figure>
+    <div>
+      <p class="q" style="margin-top:0">Process</p>
+      <div class="notes">
+    <ul>
+      <li>The Dx and Dy of each pixel of the image was calculated through convolving them and then the orientation of each pixel was computed by turning the into an angle using the arctangent formula.</li>
+      <li>As arctangent gives values in [-pi, pi], adding pi and dividing by 2pi would map the values to a [0,1] to express on the plot.</li>
+    </ul>
+  </div>
+      <p class="q">Observations</p>
+      <div class="notes">
+    <p>The directions of the gradient directions are present in the image. For example, the two sides of the tripod leg are different as their gradients are pointing at different directions. Strong edges such as these show meaningful colors, but there are a lot of noise involved, due to value being 1.</p>
+  </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- PART 2                                                            -->
+<!-- ================================================================ -->
+<h1 class="part-title">Part 2: Fun with Frequencies</h1>
+
+<!-- ---------------- 2.1 ---------------- -->
+<section id="p2-1">
+  <h2><span class="num">2.1</span> Image &ldquo;Sharpening&rdquo;</h2>
+  <p class="section-intro">Unsharp masking as a single convolution: <code>(1 + &alpha;)&middot;&delta; &minus; &alpha;&middot;G</code>.</p>
+
+  <p class="q">How unsharp masking works</p>
+  <div class="notes">
+    <ul>
+      <li>First applying the gaussian blur allows isolation of the low frequencies in the image. This is due to sharp variations in pixels are being canceled out by blurring them, while the mild variations are less affected. Frequencies are changes in the pixels, hence, high frequencies (sharp variations) are smoothed out and the lower frequencies are retained.</li>
+      <li>The high frequencies are then attained by subtracting the lower frequency image resulting from a gaussian blur.</li>
+      <li>For unsharp masking, the theory is that edges and details of the image are within the high frequency domain. Hence, reinforcing that high frequency allows a ‘sharpening’ of the image. Adding multiple high frequency images onto the image would further sharpen it.</li>
+    </ul>
+  </div>
+
+  <h3 class="subhead">Taj Mahal</h3>
+  <figure class="fig-full">
+    <img src="media/2_1_taj.jpg" alt="Taj Mahal: blurred, high frequency, original, sharpened" loading="lazy">
+    <figcaption>Blurred &middot; High frequency &middot; Original &middot; Sharpened (single convolution)</figcaption>
+    <div class="params"><span>Gaussian 9&times;9, &sigma; = 1</span><span>&alpha; = 0.5</span></div>
+  </figure>
+  <div class="notes">
+    <ul>
+      <li>The sharpened Taj Mahal shows more emphasis on the edges of the buildings. For example, the bricks are more defined and the black line structures on the left of the Taj Mahal are more prominent than before. Overall, the building seems more defined than before.</li>
+    </ul>
+  </div>
+
+  <h3 class="subhead">Image of my choice &mdash; blurry Golden Gate Bridge, varying &alpha;</h3>
+  <figure class="fig-full">
+    <img src="media/2_1_blurry_gg.jpg" alt="Blurry night photo of the Golden Gate Bridge, then sharpened with increasing alpha" loading="lazy">
+    <figcaption>Original (blurry) &middot; &alpha; = 2 &middot; &alpha; = 20 &middot; &alpha; = 50</figcaption>
+    <div class="params"><span>Gaussian 9&times;9, &sigma; = 1</span></div>
+  </figure>
+  <p class="q">How does changing &alpha; change the result?</p>
+  <div class="notes">
+    <ul>
+      <li>Introducing a higher alpha would mean that the high frequency version of the image is added in multiples. At a high alpha, this would put unnecessary emphasis on pixels that were part of the high frequency but did not need emphasis and brighten them.</li>
+      <li>At a moderate alpha, the image still retains the original overall intensity, but allows slight emphasis on the edges, which is an ideal ‘sharpening’ of the image. This is true in the image above at alpha=2, where the bridge is more defined than before.</li>
+    </ul>
+  </div>
+
+  <h3 class="subhead">Evaluation &mdash; sharp image &rarr; blur &rarr; re-sharpen</h3>
+  <figure class="fig-full">
+    <img src="media/2_1_gg_blur_resharpen.jpg" alt="Golden Gate Bridge: original, blurred, re-sharpened" loading="lazy">
+    <figcaption>Original &middot; Blurred &middot; Re-sharpened</figcaption>
+    <div class="params"><span>&alpha; = 4</span></div>
+  </figure>
+  <p class="q">Original vs. sharpened &mdash; observations</p>
+  <div class="notes">
+    <ul>
+      <li>The blur then resharpen method did not seem to result back into the original image.</li>
+      <li>This is because when blurred through gaussian, the original high frequency information is lost. The secondary high frequencies would be based on the blurred image and would be sharpen the blurred image, but not to the level of the original one.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ---------------- 2.2 ---------------- -->
+<section id="p2-2">
+  <h2><span class="num">2.2</span> Hybrid Images</h2>
+  <p class="section-intro">Low-pass (Gaussian) of one image + high-pass (impulse &minus; Gaussian) of another, after alignment.</p>
+
+  <!-- Featured hybrid: full process -->
+  <h3 class="subhead">Hanjoo &times; Tori &mdash; full process</h3>
+
+  <p class="q" style="margin-top:6px">Inputs</p>
+  <div class="grid-2" style="max-width:640px">
+    <figure>
+      <img src="media/2_2_input_hanjoo.jpg" alt="Input: Hanjoo selfie (low frequency)" loading="lazy">
+      <figcaption><strong>Low frequency</strong> &middot; Hanjoo</figcaption>
+    </figure>
+    <figure>
+      <img src="media/2_2_input_tori.jpg" alt="Input: Tori the dog (high frequency)" loading="lazy">
+      <figcaption><strong>High frequency</strong> &middot; Tori</figcaption>
+    </figure>
+  </div>
+
+  <p class="q">Aligned images and Fourier analysis</p>
+  <figure class="fig-full">
+    <img src="media/2_2_hanjoo_tori_process.jpg" alt="Aligned inputs, low-pass Hanjoo, high-pass Tori, and hybrid, each with its log-magnitude Fourier transform" loading="lazy">
+    <figcaption>Columns: aligned Hanjoo &middot; aligned Tori &middot; low-pass Hanjoo &middot; high-pass Tori &middot; hybrid<br>Top: image &middot; Bottom: log |FFT|</figcaption>
+    <div class="params"><span>&sigma;<sub>low</sub> = 5</span><span>&sigma;<sub>high</sub> = 12</span></div>
+  </figure>
+
+  <p class="q">Cutoff frequency choice</p>
+  <div class="notes">
+    <ul>
+      <li>Sigmas determine how wide the bell curve applied to the kernel is. With a larger sigma, the bell curve will be flatter, but would need a larger kernel. A kernel size of 6sigma + 1 was used as a dynamic kernel size, as most of the weights of the bell curve can be included by 3sigma away from the center, with the 1 added to make sure the kernel sizes were odd.</li>
+      <li>The sigmas were selected through trial and error based on the resulting hybrid image. The ideal result would be to see the high frequency image more close up and the low frequency image more from afar.</li>
+      <li>The sigma for the low frequency is expected to be somewhat lower than the sigma for the higher frequency. However it cannot be too too small so that high frequencies are not smoothed out enough, which would make the differentiation of high and low frequency images meaningless.</li>
+    </ul>
+  </div>
+
+  <p class="q">Result</p>
+  <div class="split flip">
+    <figure>
+      <img src="media/2_2_hanjoo_tori_hybrid.jpg" alt="Hybrid of Hanjoo and Tori" loading="lazy">
+      <figcaption>Hybrid &mdash; view up close, then from far away</figcaption>
+    </figure>
+    <div class="notes">
+    <p>The image shows a successful hybrid image of myself and my dog, where I can be seen better at a distance and tori close up.</p>
+  </div>
+  </div>
+
+  <!-- Additional hybrids -->
+  <h3 class="subhead">Tori &times; Tori</h3>
+  <figure class="fig-full">
+    <img src="media/2_2_tori_tori.jpg" alt="Tori image 1, Tori image 2, and their hybrid" loading="lazy">
+    <figcaption>Low frequency &middot; High frequency &middot; Hybrid</figcaption>
+    <div class="params"><span>&sigma;<sub>low</sub> = 9</span><span>&sigma;<sub>high</sub> = 12</span></div>
+  </figure>
+  <div class="notes">
+    <ul>
+      <li>Left Tori: Low Frequency, dominant afar</li>
+      <li>Right Tori: High Frequency, dominant up close</li>
+    </ul>
+  </div>
+
+  <h3 class="subhead">Derek &times; Nutmeg</h3>
+  <figure class="fig-full">
+    <img src="media/2_2_derek_nutmeg.jpg" alt="Aligned Nutmeg, aligned Derek, and their hybrid" loading="lazy">
+    <figcaption>Nutmeg (high frequency) &middot; Derek (low frequency) &middot; Hybrid</figcaption>
+    <div class="params"><span>&sigma;<sub>low</sub> = 16</span><span>&sigma;<sub>high</sub> = 20</span></div>
+  </figure>
+  <div class="notes">
+    <ul>
+      <li>Derek: Low Frequency, dominant afar</li>
+      <li>Nutmeg: High Frequency, dominant up close</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ---------------- 2.2 B&W ---------------- -->
+<section id="p2-2-bw">
+  <h2><span class="num">2.2</span> Color in Hybrid Images <span class="tag">Bells &amp; Whistles</span></h2>
+  <p class="section-intro">Does color work better in the high-frequency component, the low-frequency component, or both?</p>
+
+  <div class="grid-3">
+    <figure>
+      <img src="media/2_2_bw_color_low.jpg" alt="Hybrid with color in low frequency only" loading="lazy">
+      <figcaption><strong>Color: low frequency</strong><br>Gray: high frequency</figcaption>
+    </figure>
+    <figure>
+      <img src="media/2_2_bw_color_high.jpg" alt="Hybrid with color in high frequency only" loading="lazy">
+      <figcaption><strong>Color: high frequency</strong><br>Gray: low frequency</figcaption>
+    </figure>
+    <figure>
+      <img src="media/2_2_bw_color_both.jpg" alt="Hybrid with color in both components" loading="lazy">
+      <figcaption><strong>Color: both</strong></figcaption>
+    </figure>
+  </div>
+  <div class="grid-3">
+    <div class="notes">
+    <ul>
+      <li>Color in low frequency allows more dominance in that frequency over a gray low frequency and is more apparent than before.</li>
+    </ul>
+  </div>
+    <div class="notes">
+    <ul>
+      <li>The color in the high frequency does not contrast as strongly in comparison to gray high frequency images. The colors are not that apparent.</li>
+    </ul>
+  </div>
+    <div class="notes">
+    <ul>
+      <li>Hence, colors in both seem almost equivalent to the image when there are colors in the low frequency only.</li>
+    </ul>
+  </div>
+  </div>
+
+  <p class="q">Conclusion</p>
+  <div class="notes">
+    <ul>
+      <li>It could be said that the best color combination is when the lower frequency image is of color and the higher frequency image is gray. Colors are normally in low frequencies and are lost in high frequencies. Hence, the best differentiation between the low and high frequencies come up when the low frequency image is reinforced with color.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ---------------- 2.3 ---------------- -->
+<section id="p2-3">
+  <h2><span class="num">2.3</span> Gaussian and Laplacian Stacks</h2>
+  <p class="section-intro">Stacks (no downsampling) applied to the apple and orange, recreating Figure 3.42 (a)&ndash;(l) from Szeliski.</p>
+
+  <p class="q">Implementation</p>
+  <div class="notes">
+    <ul>
+      <li>Gaussian Stack:
+      <ul>
+        <li>This was simple without downsampling, it was re-applying gaussian blurs to the resulting blur, for a set amount of levels.</li>
+        <li>The sigmas were added by 4 at each level, to ensure each level had an obvious difference for calculating the laplacians.
+        </li></ul></li>
+      <li>Laplacian Stack:
+      <ul>
+        <li>The Laplacian stacks were computed by using the differences of the gaussian blurs between each level. The lowest level in the Laplacian stack used the single blur in the lowest level of the Gaussian Stack.</li>
+        <li>This effectively stores the information lost when applying the gaussian blurs.
+        </li></ul></li>
+      <li>Hence, the full summation of the laplacian stack would end up in the original image.</li>
+    </ul>
+  </div>
+
+  <div class="split">
+    <figure>
+      <img src="media/2_3_oraple_stacks.jpg" alt="Recreation of Szeliski Figure 3.42: masked Laplacian levels and blended results for apple and orange" loading="lazy">
+      <figcaption>Columns: apple &middot; orange &middot; combined<br>Rows: Laplacian levels 0, 2, 4 &middot; summed result</figcaption>
+    </figure>
+    <div class="notes">
+    <ul>
+      <li>Each image is at level 0, 2, 4 is a laplacian level of the image. They show the information lost after each gaussian blur. These are the information lost at each level:
+      <ul>
+        <li>0: We can see the high frequencies of the image: the hard edges of the apple, textures of the orange</li>
+        <li>2: We can see the softer edges of the images, the overall shape of the fruits</li>
+        <li>4: We can see some colors that made up the fruits
+        </li></ul></li>
+      <li>Also, the images in the figure were clipped to get a better visual of the images, as laplacians have values around 0. (It was also to somewhat match the figure in the paper as well)</li>
+    </ul>
+  </div>
+  </div>
+</section>
+
+<!-- ---------------- 2.4 ---------------- -->
+<section id="p2-4">
+  <h2><span class="num">2.4</span> Multiresolution Blending</h2>
+  <p class="section-intro">Blending with Laplacian stacks of each image and a Gaussian stack of the mask.</p>
+
+  <h3 class="subhead">The Oraple</h3>
+  <div class="grid-3">
+    <figure>
+      <img src="media/2_4_input_apple.jpg" alt="Input: apple" loading="lazy">
+      <figcaption><strong>Apple</strong> &middot; left half</figcaption>
+    </figure>
+    <figure>
+      <img src="media/2_4_input_orange.jpg" alt="Input: orange" loading="lazy">
+      <figcaption><strong>Orange</strong> &middot; right half</figcaption>
+    </figure>
+    <figure>
+      <img src="media/2_4_oraple_blend.jpg" alt="Oraple: apple and orange blended at a vertical seam" loading="lazy">
+      <figcaption><strong>Oraple</strong></figcaption>
+    </figure>
+  </div>
+  <div class="notes">
+    <ul>
+      <li>The blending mask was constructed by creating an zeros array equally sized to the images and filling the area of interest with 1. In terms of left, the left half of the array was filled with 1s and for right, the right half was filled with 1s</li>
+      <li>Then, they were gaussian blurred with the same amount of levels of images. These blurred. masks were then applied to the apple/oranges at each corresponding level by multiplying itself to the images and smoothing them out. The smoothing factor at the lowest level would be the highest.</li>
+      <li>This is natural as high levels of the laplacian retain the high frequency features which should not be smoothed out, while the low frequencies in the lower levels (such as color) are smoothed out, mixing the two objects at the seam.</li>
+      <li>Since the orange and apple in the image are somewhat of similar color, the blurring and mix of pixel weights were did not have a relatively high difference, hence a somewhat smooth transition in color was achieved. However, the texture difference is still apparent.</li>
+    </ul>
+  </div>
+
+  <h3 class="subhead">Custom blend #1 &mdash; Golden Gate, night &times; day (straight seam)</h3>
+  <div class="grid-3">
+    <figure>
+      <img src="media/2_4_input_gg_a.jpg" alt="Input: Golden Gate Bridge at night" loading="lazy">
+      <figcaption><strong>Left half</strong> &middot; Golden Gate at night</figcaption>
+    </figure>
+    <figure>
+      <img src="media/2_4_input_gg_b.jpg" alt="Input: Golden Gate Bridge on a clear day" loading="lazy">
+      <figcaption><strong>Right half</strong> &middot; Golden Gate by day</figcaption>
+    </figure>
+    <figure>
+      <img src="media/2_4_gg_seam_blend.jpg" alt="Blend: night on the left, day on the right, joined at a vertical seam" loading="lazy">
+      <figcaption><strong>Blended</strong></figcaption>
+    </figure>
+  </div>
+  <details class="code">
+    <summary>Show Laplacian stacks</summary>
+    <figure class="fig-full" style="max-width:720px">
+      <img src="media/2_4_gg_seam_stacks.jpg" alt="Laplacian levels of the masked night and day bridge photos and their blend" loading="lazy">
+      <figcaption>Columns: masked night &middot; masked day &middot; blend<br>Rows: Laplacian levels 0, 2, 4 &middot; summed result</figcaption>
+    </figure>
+  </details>
+  <div class="notes">
+    <ul>
+      <li>The bridge towers were used to align the images and were successfully aligned in terms of location. The towers look somewhat naturally blended from a when briefly inspected.</li>
+      <li>However, this was a blending between two extremely different brightness and colors, hence the seam is very apparent. (But it looks cool…)</li>
+    </ul>
+  </div>
+
+  <h3 class="subhead">Custom blend #2 &mdash; Dotonbori on a Hawaii beach (irregular mask)</h3>
+  <div class="grid-3">
+    <figure>
+      <img src="media/2_4_input_dotonbori.jpg" alt="Input: Dotonbori street in Osaka" loading="lazy">
+      <figcaption><strong>Image A</strong> &middot; Dotonbori, Osaka (masked along the buildings)</figcaption>
+    </figure>
+    <figure>
+      <img src="media/2_4_input_hawaii_beach.jpg" alt="Input: Hawaii beach under a cloudy sky" loading="lazy">
+      <figcaption><strong>Image B</strong> &middot; Hawaii beach</figcaption>
+    </figure>
+    <figure>
+      <img src="media/2_4_dotonbori_beach_blend.jpg" alt="Blend: Dotonbori buildings and walkway along a Hawaii beach" loading="lazy">
+      <figcaption><strong>Blended</strong></figcaption>
+    </figure>
+  </div>
+  <details class="code">
+    <summary>Show Laplacian stacks</summary>
+    <figure class="fig-full" style="max-width:720px">
+      <img src="media/2_4_dotonbori_beach_stacks.jpg" alt="Laplacian levels of masked Dotonbori, masked beach, and their blend" loading="lazy">
+      <figcaption>Columns: masked Dotonbori &middot; masked beach &middot; blend<br>Rows: Laplacian levels 0, 2, 4 &middot; summed result</figcaption>
+    </figure>
+  </details>
+  <div class="notes">
+    <p><strong>Custom (Irregular Mask)</strong></p>
+    <ul>
+      <li>Since the images had different sizes, the aligning code given from the previous section was used to align the object of interest and resize them to fit each other. (Hence the padding)</li>
+      <li>Also, a polygon generation through python was made through plt.ginput() to get the location of the mask on the image and creating it.</li>
+    </ul>
+    <p><strong>Dotonbori × Hawaii Beach</strong></p>
+    <ul>
+      <li>This was an attempt kind of merge two extremely different locations that should not be there into one (Two locations I loved)</li>
+      <li>The skies were not blending due to lighting differences, so I excluded the skies in osaka and use the hawaii ones.</li>
+      <li>I also made sure to weave through the building edges and between buildings to visually make the merge more realistic.</li>
+    </ul>
+  </div>
+
+  <h3 class="subhead">Custom blend #3 &mdash; Monster under the Opera House (irregular mask)</h3>
+  <div class="grid-3">
+    <figure>
+      <img src="media/2_4_input_opera_house.jpg" alt="Input: Sydney Opera House at night" loading="lazy">
+      <figcaption><strong>Background</strong> &middot; Sydney Opera House</figcaption>
+    </figure>
+    <figure>
+      <img src="media/2_4_input_eyes.jpg" alt="Input: selfie looking up, eyes at the bottom of the frame" loading="lazy">
+      <figcaption><strong>Foreground</strong> &middot; eyes (hand-drawn mask)</figcaption>
+    </figure>
+    <figure>
+      <img src="media/2_4_opera_eyes_blend.jpg" alt="Blend: a pair of eyes peering out of the harbor below the Opera House" loading="lazy">
+      <figcaption><strong>Blended</strong></figcaption>
+    </figure>
+  </div>
+  <details class="code">
+    <summary>Show Laplacian stacks</summary>
+    <figure class="fig-full" style="max-width:720px">
+      <img src="media/2_4_opera_eyes_stacks.jpg" alt="Laplacian levels of masked eyes, masked Opera House, and their blend" loading="lazy">
+      <figcaption>Columns: masked eyes &middot; masked Opera House &middot; blend<br>Rows: Laplacian levels 0, 2, 4 &middot; summed result</figcaption>
+    </figure>
+  </details>
+  <div class="notes">
+    <ul>
+      <li>Beautiful photo taken of the Sydney Opera House back when I was there and myself looking up were blended.</li>
+      <li>Imagined something like a mythical creature hiding in the shadows of the seas</li>
+      <li>However, the color difference between my skin and the seas did not blend persuasively.</li>
+    </ul>
+  </div>
+
+  <h3 class="subhead">Custom blend #4 &mdash; City reflections under the Opera House (irregular mask)</h3>
+  <div class="grid-3">
+    <figure>
+      <img src="media/2_4_input_opera_house.jpg" alt="Input: Sydney Opera House at night" loading="lazy">
+      <figcaption><strong>Background</strong> &middot; Sydney Opera House</figcaption>
+    </figure>
+    <figure>
+      <img src="media/2_4_input_river_buildings.jpg" alt="Input: city buildings reflected in a river at night" loading="lazy">
+      <figcaption><strong>Foreground</strong> &middot; river reflections (hand-drawn mask)</figcaption>
+    </figure>
+    <figure>
+      <img src="media/2_4_opera_buildings_blend.jpg" alt="Blend: city-light reflections in the water below the Opera House" loading="lazy">
+      <figcaption><strong>Blended</strong></figcaption>
+    </figure>
+  </div>
+  <div class="notes">
+    <ul>
+      <li>The building reflection image was a picture I took at Docklands, Melbourne.</li>
+      <li>This reflection mask was a rectangular mask in the middle of the sea which tried to blend at the coast of the opera house and the Docklands harbor coast.</li>
+      <li>It was an attempt to make two worlds collide again, where the reflection of the opera house is replaced by the reflection of the buildings.</li>
+    </ul>
+  </div>
+
+  <h3 class="subhead">Process for favorite result (cf. Figure 10 in Burt &amp; Adelson)</h3>
+  <div class="split">
+    <figure>
+      <img src="media/2_4_opera_buildings_stacks.jpg" alt="Laplacian levels of masked river reflections, masked Opera House, and their blend; bottom row shows the summed results" loading="lazy">
+      <figcaption>City reflections under the Opera House<br>Columns: masked reflections &middot; masked Opera House &middot; blend<br>Rows: Laplacian levels 0, 2, 4 &middot; summed result</figcaption>
+    </figure>
+    <div class="notes">
+    <p>I chose this one because the reflections blend into the harbor most convincingly. They are both of the sea, so it seemed that it was a good match to blend.</p>
+    <p>For each level:</p>
+    <ul>
+      <li>0: Shows the fine details - sharp light streaks and ripples</li>
+      <li>2: Shows the mid details - the shapes of the reflected buildings</li>
+      <li>4: Shows the broad brightness and color of the water</li>
+    </ul>
+    <p>Adding all the blended levels gives the final image, without a hard seam.</p>
+  </div>
+  </div>
+</section>
+
+<!-- ---------------- 2.4 B&W ---------------- -->
+<section id="p2-4-bw">
+  <h2><span class="num">2.4</span> Color in Blending <span class="tag">Bells &amp; Whistles</span></h2>
+  <p class="section-intro">Using color to enhance the effect.</p>
+
+  <div class="grid-2">
+    <figure>
+      <img src="media/2_4_opera_eyes_blend_gray.jpg" alt="Monster under the Opera House, blended in grayscale" loading="lazy">
+      <figcaption><strong>Grayscale blend</strong> &middot; Monster under the Opera House</figcaption>
+    </figure>
+    <figure>
+      <img src="media/2_4_opera_eyes_blend.jpg" alt="Monster under the Opera House, blended in color" loading="lazy">
+      <figcaption><strong>Color blend</strong> &middot; Monster under the Opera House</figcaption>
+    </figure>
+  </div>
+  <div class="notes">
+    <ul>
+      <li>The grayscale for the eyes blending in to the sea works better, as the color that differentiated the eye from the sea is gone, as is based on the intensity of the pixel, which has a similarity to the eyes (brighter tone)</li>
+      <li>Hence, excluding color could be helpful in a more natural blend in some cases. However, the texture is quite different from the surrounding sea which still stands out.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ---------------- Takeaway ---------------- -->
+<section id="learned">
+  <h2>The Most Important Thing I Learned</h2>
+  <div class="notes">
+    <ul>
+      <li>I’ve definitely learned that levels of frequencies are able to be played around with, and partakes a lot in the human vision.</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer>Hanjoo Kim &middot; CS280A Fall 2026</footer>
+
+<div id="lightbox" role="dialog" aria-label="Enlarged image"><img alt=""></div>
+<script>
+  (function () {
+    var box = document.getElementById('lightbox');
+    var big = box.querySelector('img');
+    document.querySelectorAll('main figure img').forEach(function (img) {
+      img.addEventListener('click', function () {
+        big.src = img.src;
+        big.alt = img.alt;
+        box.classList.add('open');
+      });
+    });
+    function close() { box.classList.remove('open'); big.src = ''; }
+    box.addEventListener('click', close);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  })();
+</script>
+</body>
+</html>
