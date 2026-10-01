@@ -573,12 +573,12 @@ dy_scipy_image  = convolve2d(image, Dy, mode='same')</code></pre>
 
   <p class="q">Verify: same result as Method A?</p>
   <figure style="max-width:560px">
-    <img src="media/1_3_verification.png" alt="np.array_equal on the two gradient magnitudes with a 5-pixel border cropped returns True" loading="lazy">
+    <img src="media/1_3_verification.png" alt="np.array_equal on the two gradient magnitudes with a 1-pixel border cropped returns True" loading="lazy">
   </figure>
   <div class="notes">
     <ul>
       <li>Convolution is associative, which means that applying whichever convolution first does not change the output result. It is applying a weight sum of pixels to the arrays, hence does not matter whichever is applied first.</li>
-      <li>The outer 5 rows and columns (each of top, bottom, right, left) were cropped out when calculating the equivalence. This was due to each convolution of Dx and Dy on the Gaussian kernel ending up with extra rows/columns due to paddings from mode=’same’ in convolve2d. The paddings only differed because mode=’same’ of convolve2d cropped out the paddings twice on the first method and only once on the second method, hence had different pixel values in the paddings only. The rest of the image pixels were assumed to be equivalent.</li>
+      <li>This is because in method A, convolve2d(...mode='same') was used twice. mode='same' crops out the newly padded pixels resulting from the convolution, which is a loss of information for the pixels at the very edge of the image when convolving again with Dy and Dx. Hence, the very end row and column pixels of the image should differ from the DoG method, where the information is already applied to the Gaussian kernel, then to the image. Hence, the end pixels of the image was cropped away, and the rest of the internal pixels were successfully compared to be equal.</li>
     </ul>
   </div>
 </section>
@@ -681,11 +681,11 @@ dy_scipy_image  = convolve2d(image, Dy, mode='same')</code></pre>
   <div class="grid-2" style="max-width:640px">
     <figure>
       <img src="media/2_2_input_hanjoo.jpg" alt="Input: Hanjoo selfie (low frequency)" loading="lazy">
-      <figcaption><strong>Low frequency</strong> &middot; Hanjoo</figcaption>
+      <figcaption><strong>Input</strong> &middot; Hanjoo (low-pass source)</figcaption>
     </figure>
     <figure>
       <img src="media/2_2_input_tori.jpg" alt="Input: Tori the dog (high frequency)" loading="lazy">
-      <figcaption><strong>High frequency</strong> &middot; Tori</figcaption>
+      <figcaption><strong>Input</strong> &middot; Tori (high-pass source)</figcaption>
     </figure>
   </div>
 
@@ -696,12 +696,20 @@ dy_scipy_image  = convolve2d(image, Dy, mode='same')</code></pre>
     <div class="params"><span>&sigma;<sub>low</sub> = 5</span><span>&sigma;<sub>high</sub> = 12</span></div>
   </figure>
 
+  <p class="q">Alignment</p>
+  <div class="notes">
+    <ul>
+      <li>The for facial images, they were aligned by aligning these points: The top-left of the left eye and the bottom right of the right eye in each subject image.</li>
+    </ul>
+  </div>
+
   <p class="q">Cutoff frequency choice</p>
   <div class="notes">
     <ul>
-      <li>Sigmas determine how wide the bell curve applied to the kernel is. With a larger sigma, the bell curve will be flatter, but would need a larger kernel. A kernel size of 6sigma + 1 was used as a dynamic kernel size, as most of the weights of the bell curve can be included by 3sigma away from the center, with the 1 added to make sure the kernel sizes were odd.</li>
+      <li>Gaussian sigmas determine how wide the bell curve applied to the kernel is. With a larger sigma, the bell curve will be flatter, but would need a larger kernel. A kernel size of 6sigma + 1 was used as a dynamic kernel size, as most of the weights of the bell curve can be included by 3sigma away from the center, with the 1 added to make sure the kernel sizes were odd.</li>
       <li>The sigmas were selected through trial and error based on the resulting hybrid image. The ideal result would be to see the high frequency image more close up and the low frequency image more from afar.</li>
-      <li>The sigma for the low frequency is expected to be somewhat lower than the sigma for the higher frequency. However it cannot be too too small so that high frequencies are not smoothed out enough, which would make the differentiation of high and low frequency images meaningless.</li>
+      <li>Sigma for low-pass filters were ideally high enough so that the high frequencies are filtered out and blurred, but not too much so that the features that determine the shape of the figures are not unrecognizable from afar. On the other hand, high-pass filters ideally leave only high frequency and some of the mid-level frequency features left to be recognizable up close. So the sigma is not too low, as subtracting a slightly blurred image will leave only the highest frequencies behind and not the medium frequencies.</li>
+      <li>The cutoff frequencies were found by adjusting the sigma values experimentally and evaluated by being near and far visually.</li>
     </ul>
   </div>
 
@@ -720,7 +728,7 @@ dy_scipy_image  = convolve2d(image, Dy, mode='same')</code></pre>
   <h3 class="subhead">Tori &times; Tori</h3>
   <figure class="fig-full">
     <img src="media/2_2_tori_tori.jpg" alt="Tori image 1, Tori image 2, and their hybrid" loading="lazy">
-    <figcaption>Low frequency &middot; High frequency &middot; Hybrid</figcaption>
+    <figcaption>Aligned Tori 1 &middot; Aligned Tori 2 &middot; Hybrid (Tori 1 low-pass + Tori 2 high-pass)</figcaption>
     <div class="params"><span>&sigma;<sub>low</sub> = 9</span><span>&sigma;<sub>high</sub> = 12</span></div>
   </figure>
   <div class="notes">
@@ -733,8 +741,8 @@ dy_scipy_image  = convolve2d(image, Dy, mode='same')</code></pre>
   <h3 class="subhead">Derek &times; Nutmeg</h3>
   <figure class="fig-full">
     <img src="media/2_2_derek_nutmeg.jpg" alt="Aligned Nutmeg, aligned Derek, and their hybrid" loading="lazy">
-    <figcaption>Nutmeg (high frequency) &middot; Derek (low frequency) &middot; Hybrid</figcaption>
-    <div class="params"><span>&sigma;<sub>low</sub> = 16</span><span>&sigma;<sub>high</sub> = 20</span></div>
+    <figcaption>Aligned Nutmeg &middot; Aligned Derek &middot; Hybrid (Derek low-pass + Nutmeg high-pass)</figcaption>
+    <div class="params"><span>&sigma;<sub>low</sub> = 8</span><span>&sigma;<sub>high</sub> = 12</span></div>
   </figure>
   <div class="notes">
     <ul>
@@ -972,7 +980,7 @@ dy_scipy_image  = convolve2d(image, Dy, mode='same')</code></pre>
   <div class="notes">
     <ul>
       <li>The building reflection image was a picture I took at Docklands, Melbourne.</li>
-      <li>This reflection mask was a rectangular mask in the middle of the sea which tried to blend at the coast of the opera house and the Docklands harbor coast.</li>
+      <li>The reflection mask was a irregular mask that cut out the building reflections which tried to blend at the coast of the opera house and the Docklands harbor coast.</li>
       <li>It was an attempt to make two worlds collide again, where the reflection of the opera house is replaced by the reflection of the buildings.</li>
     </ul>
   </div>
@@ -1024,7 +1032,14 @@ dy_scipy_image  = convolve2d(image, Dy, mode='same')</code></pre>
   <h2>The Most Important Thing I Learned</h2>
   <div class="notes">
     <ul>
-      <li>I’ve definitely learned that levels of frequencies are able to be played around with, and partakes a lot in the human vision.</li>
+      <li>I’ve definitely learned that levels of frequencies are able to be played around with, and partakes a lot in the human vision. I didn’t know Gaussian blurring was so useful in different use cases, by using it to exploit the frequency content of images. Images have such a high dimension but can be manipulated in ingenious ways for magical results.</li>
+      <li>Each application was fascinating:
+        <ul>
+          <li>Unsharping was the simple yet effective idea of strengthening the image’s high frequency component.</li>
+          <li>Hybrid Images exploits how high and low frequency are perceived by the human eye depending on distance.</li>
+          <li>Gaussian and Laplacian stacks decompose images across multiple frequency levels. Blending corresponding levels with a blurred mask allowing for a smooth blend adding them back.</li>
+        </ul></li>
+      <li>All unlocked mysteries that I subconsciously held about image manipulations whenever I were in touch with them</li>
     </ul>
   </div>
 </section>
