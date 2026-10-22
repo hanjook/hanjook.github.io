@@ -713,7 +713,7 @@
 
   <p class="q">What patterns appear, and why?</p>
   <div class="notes">
-    <p>When training with noisy images, it still contains information about the original image, hence the model can reconstruct that image. However for denoising from pure noise, the model has no clue as to which digit to produce, resulting in producing the average training image no matter what, which is the minimum of sum of squared distances across all training samples. Hence, whatever digit image is inputted, the same image is outputted during training, resulting in a constant MSE.</p>
+    <p>When training with noisy images, it still contains information about the original image, hence the model can reconstruct that image. However for denoising from pure noise, the model has no clue as to which digit to produce, resulting in producing the average training image no matter what, which is the minimum of sum of squared distances across all training samples. Hence, whatever pure noise is inputted, the same image is outputted during training, resulting in a constant MSE.</p>
   </div>
 </section>
 
