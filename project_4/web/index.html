@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Warping and Mosaicing</title>
+<!--
+  HOW TO FILL THIS IN
+  - To add text, use <div class="notes"><p>...</p></div> (already styled).
+  - Missing images are <div class="missing">...</div>. Replace the whole div with
+      <figure><img src="media/NAME.jpg" alt="..." loading="lazy"><figcaption>...</figcaption></figure>
+    The suggested file name is written inside each placeholder.
+  - Numbers to fill in are marked with "—" in tables and "paste ... here" in <pre> blocks.
+  - Any <img> inside <main> can be clicked to open full-size.
+-->
+<style>
+  :root {
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --bg: #ffffff;
+    --panel: #f6f6f4;
+    --border: #e3e3e0;
+    --accent: #2f5d8a;
+    --accent-soft: #e8eff6;
+    --code-bg: #1f2227;
+    --code-text: #e6e6e6;
+    --maxw: 1080px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    margin: 0;
+    line-height: 1.6;
+  }
+  a { color: var(--accent); }
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.9em; }
+  p code, li code, td code, figcaption code {
+    background: var(--panel);
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  /* ---------- header + nav ---------- */
+  header.hero {
+    padding: 52px 24px 30px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  header.hero .back {
+    display: inline-block;
+    margin-bottom: 18px;
+    font-size: 0.9em;
+    color: var(--muted);
+    text-decoration: none;
+  }
+  header.hero .back:hover { color: var(--accent); }
+  header.hero h1 { margin: 0 0 6px; font-size: 2.2em; letter-spacing: -0.01em; }
+  header.hero .subtitle { margin: 0; color: var(--muted); }
+  header.hero .byline { margin: 12px 0 0; color: var(--muted); font-size: 0.95em; }
+
+  nav.toc {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border);
+  }
+  nav.toc .inner {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 10px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    justify-content: center;
+    font-size: 0.88em;
+  }
+  nav.toc a { text-decoration: none; color: var(--text); white-space: nowrap; }
+  nav.toc a:hover { color: var(--accent); }
+  nav.toc .sep { color: var(--border); }
+  nav.toc .lbl { font-weight: 700; color: var(--muted); }
+
+  main { max-width: var(--maxw); margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ---------- part + section headings ---------- */
+  .part-title {
+    margin: 72px 0 0;
+    padding-bottom: 10px;
+    border-bottom: 3px solid var(--text);
+    font-size: 1.9em;
+    scroll-margin-top: 56px;
+  }
+  section { padding-top: 48px; scroll-margin-top: 56px; }
+  section h2 {
+    font-size: 1.45em;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  section h2 .num { color: var(--accent); }
+  .tag {
+    font-size: 0.55em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 8px;
+    border-radius: 999px;
+    vertical-align: middle;
+  }
+  .section-intro {
+    color: var(--muted);
+    font-size: 0.95em;
+    margin: 4px 0 24px;
+    max-width: 760px;
+  }
+  h3.subhead {
+    font-size: 1.1em;
+    margin: 40px 0 12px;
+    padding-left: 10px;
+    border-left: 3px solid var(--accent);
+  }
+
+  /* ---------- figures ---------- */
+  figure { margin: 0; }
+  figure img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #fff;
+    cursor: zoom-in;
+  }
+  figcaption {
+    margin-top: 8px;
+    font-size: 0.86em;
+    color: var(--muted);
+    text-align: center;
+  }
+  figcaption strong { color: var(--text); }
+  .fig-full { margin: 14px 0 18px; }
+  .fig-narrow { max-width: 620px; margin: 14px auto 18px; }
+  .fig-small { max-width: 320px; margin: 14px auto 18px; }
+
+  .grid-2, .grid-3 {
+    display: grid;
+    gap: 20px;
+    margin: 14px 0 18px;
+    align-items: start;
+  }
+  .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  /* placeholder for an image not produced yet */
+  .missing {
+    border: 2px dashed var(--border);
+    border-radius: 6px;
+    background: var(--panel);
+    color: var(--muted);
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 18px;
+    font-size: 0.9em;
+  }
+  .missing strong { color: var(--text); display: block; margin-bottom: 2px; }
+  .missing code { font-size: 0.85em; }
+
+  /* ---------- writing blocks ---------- */
+  .q {
+    margin: 22px 0 6px;
+    font-size: 0.78em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .notes {
+    margin: 8px 0 22px;
+    padding: 14px 18px;
+    background: var(--panel);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+  }
+  .notes > :first-child { margin-top: 0; }
+  .notes > :last-child { margin-bottom: 0; }
+  .notes p { margin: 0 0 10px; }
+  .notes ul, .notes ol { margin: 6px 0 10px; padding-left: 22px; }
+  .notes li { margin: 3px 0; }
+  .notes .ph { color: #a0a0a5; font-style: italic; }
+  .notes .cfg {
+    margin: 4px 0 2px;
+    padding-left: 10px;
+    border-left: 2px solid var(--border);
+    color: var(--muted);
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.85em;
+  }
+  .notes ol > li { margin-bottom: 12px; }
+
+  /* ---------- code ---------- */
+  details.code { margin: 12px 0 18px; }
+  details.code summary {
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--accent);
+    padding: 4px 0;
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 16px 18px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 0.82em;
+    line-height: 1.5;
+    margin: 8px 0 0;
+  }
+  pre.matrix { max-width: 620px; margin: 8px auto 18px; }
+
+  /* ---------- table ---------- */
+  table.data {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 620px;
+    margin: 10px 0 18px;
+    font-size: 0.92em;
+  }
+  table.data th, table.data td {
+    border-bottom: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+  }
+  table.data th { background: var(--panel); font-weight: 600; }
+  table.data td { vertical-align: top; }
+  table.data.wide { max-width: none; }
+  table.data.wide td:first-child, table.data.wide td:nth-child(2) { white-space: nowrap; }
+
+  /* ---------- lightbox ---------- */
+  #lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(12, 12, 14, 0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 24px;
+    cursor: zoom-out;
+  }
+  #lightbox.open { display: flex; }
+  #lightbox img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 4px;
+    background: #fff;
+  }
+
+  footer {
+    text-align: center;
+    padding: 30px 24px 50px;
+    color: var(--muted);
+    font-size: 0.85em;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 760px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    header.hero h1 { font-size: 1.7em; }
+  }
+  @media (max-width: 480px) {
+    .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <a class="back" href="../../index.html">&larr; Back to Portfolio</a>
+  <h1>Image Warping and Mosaicing</h1>
+  <p class="subtitle">CS180 / CS280A &middot; Project 4 (Part A)</p>
+  <p class="byline">Hanjoo Kim</p>
+</header>
+
+<nav class="toc">
+  <div class="inner">
+    <a class="lbl" href="#part-a">Part A</a>
+    <a href="#a1">A.1 Shoot</a>
+    <a href="#a2">A.2 Homographies</a>
+    <a href="#a3">A.3 Warping</a>
+    <a href="#a3-rect">Rectification</a>
+    <a href="#a4">A.4 Mosaics</a>
+    <a href="#a5">A.5 B&amp;W</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ================================================================ -->
+<!-- PART A                                                            -->
+<!-- ================================================================ -->
+<h1 class="part-title" id="part-a">Part A: Image Warping and Mosaicing</h1>
+
+<!-- ---------------- A.1 ---------------- -->
+<section id="a1">
+  <h2><span class="num">A.1</span> Shoot the Pictures</h2>
+
+  <h3 class="subhead">Set 1: Doe Library</h3>
+  <div class="grid-3">
+    <figure><img src="media/src_doe_left.jpg" alt="Doe Library left" loading="lazy"><figcaption>Left &middot; doe_2</figcaption></figure>
+    <figure><img src="media/src_doe_middle.jpg" alt="Doe Library middle" loading="lazy"><figcaption>Middle (reference) &middot; doe_1</figcaption></figure>
+    <figure><img src="media/src_doe_right.jpg" alt="Doe Library right" loading="lazy"><figcaption>Right &middot; doe_6</figcaption></figure>
+  </div>
+
+  <h3 class="subhead">Set 2: Building</h3>
+  <div class="grid-3">
+    <figure><img src="media/src_building_left.jpg" alt="Building left" loading="lazy"><figcaption>Left &middot; building_3</figcaption></figure>
+    <figure><img src="media/src_building_middle.jpg" alt="Building middle" loading="lazy"><figcaption>Middle (reference) &middot; building_2</figcaption></figure>
+    <figure><img src="media/src_building_right.jpg" alt="Building right" loading="lazy"><figcaption>Right &middot; building_4</figcaption></figure>
+  </div>
+
+  <h3 class="subhead">Set 3: Gateway</h3>
+  <div class="grid-3">
+    <figure><img src="media/src_gateway_left.jpg" alt="Gateway left" loading="lazy"><figcaption>Left &middot; gateway_2</figcaption></figure>
+    <figure><img src="media/src_gateway_middle.jpg" alt="Gateway middle" loading="lazy"><figcaption>Middle (reference) &middot; gateway_1</figcaption></figure>
+    <figure><img src="media/src_gateway_right.jpg" alt="Gateway right" loading="lazy"><figcaption>Right &middot; gateway_4</figcaption></figure>
+  </div>
+
+  <h3 class="subhead">Set 4: Sather Gate</h3>
+  <div class="grid-3">
+    <figure><img src="media/src_sather_gate_left.jpg" alt="Sather Gate left" loading="lazy"><figcaption>Left &middot; sather_gate_2</figcaption></figure>
+    <figure><img src="media/src_sather_gate_middle.jpg" alt="Sather Gate middle" loading="lazy"><figcaption>Middle (reference) &middot; sather_gate_1</figcaption></figure>
+    <figure><img src="media/src_sather_gate_right.jpg" alt="Sather Gate right" loading="lazy"><figcaption>Right &middot; sather_gate_4</figcaption></figure>
+  </div>
+</section>
+
+<!-- ---------------- A.2 ---------------- -->
+<section id="a2">
+  <h2><span class="num">A.2</span> Recover Homographies</h2>
+
+  <h3 class="subhead">System of equations</h3>
+  <figure class="fig-narrow"><img src="media/a2_system.jpg" alt="System of equations for one point correspondence" loading="lazy"></figure>
+  <details class="code">
+    <summary>Derivation</summary>
+    <figure class="fig-narrow"><img src="media/a2_derivation.jpg" alt="Derivation of the system of equations" loading="lazy"></figure>
+  </details>
+  <div class="notes">
+    <p>For n&gt;4 points of correspondence, we use the least squares method to estimate the Homography matrix.</p>
+  </div>
+
+  <h3 class="subhead">Correspondences: Doe Library</h3>
+  <figure class="fig-full"><img src="media/doe_dots.png" alt="Doe Library correspondences" loading="lazy"><figcaption><strong>Red:</strong> left &harr; middle &middot; <strong>Blue:</strong> middle &harr; right</figcaption></figure>
+
+  <h3 class="subhead">Recovered homographies: Doe Library</h3>
+  <p class="q">H<sub>left &rarr; middle</sub></p>
+  <pre class="matrix">[[ 1.55294806e+00 -1.21871522e-01 -1.47439713e+03]
+ [ 4.92900842e-01  1.30935852e+00 -8.50217973e+02]
+ [ 1.96999796e-04 -1.97446502e-05  1.00000000e+00]]</pre>
+  <p class="q">H<sub>right &rarr; middle</sub></p>
+  <pre class="matrix">[[ 4.71570000e-01  5.90003244e-02  1.61981279e+03]
+ [-3.98585761e-01  8.75150980e-01  3.90406014e+02]
+ [-1.72851080e-04 -4.30396548e-06  1.00000000e+00]]</pre>
+</section>
+
+<!-- ---------------- A.3 ---------------- -->
+<section id="a3">
+  <h2><span class="num">A.3</span> Warp the Images</h2>
+
+  <h3 class="subhead" id="a3-rect">Rectification: clicked corners</h3>
+  <figure class="fig-narrow"><img src="media/rectification_points.png" alt="Clicked corners for rectification" loading="lazy"><figcaption>Corners clicked on the original photos (red)</figcaption></figure>
+
+  <h3 class="subhead">Rectification: Example 1 (Chet Baker LP, 1000 &times; 1000)</h3>
+  <div class="grid-2">
+    <figure><img src="media/chet_baker_rect_nn.png" alt="Chet Baker nearest neighbor" loading="lazy"><figcaption>Nearest neighbor</figcaption></figure>
+    <figure><img src="media/chet_baker_rect_bilinear.png" alt="Chet Baker bilinear" loading="lazy"><figcaption>Bilinear</figcaption></figure>
+  </div>
+
+  <h3 class="subhead">Rectification: Example 2 (Glico sign, 600 &times; 800)</h3>
+  <div class="grid-2">
+    <figure><img src="media/glicoman_rect_nn.png" alt="Glico nearest neighbor" loading="lazy"><figcaption>Nearest neighbor</figcaption></figure>
+    <figure><img src="media/glicoman_rect_bilinear.png" alt="Glico bilinear" loading="lazy"><figcaption>Bilinear</figcaption></figure>
+  </div>
+
+  <table class="data">
+    <tr><th></th><th>Nearest neighbor (s)</th><th>Bilinear (s)</th></tr>
+    <tr><td>Example 1</td><td>1.81</td><td>3.57</td></tr>
+    <tr><td>Example 2</td><td>0.91</td><td>1.81</td></tr>
+  </table>
+
+  <p class="q">Quality comparison</p>
+  <div class="notes">
+    <p>The quality of the two aren’t apparent in the chet baker one as it is composed mostly of large sized colors, but in the glicoman one we can see that the aliasing from the lights from the sign is stronger in Nearest Neighbours than Bilinear Interpolation. This is because NN takes the whole pixel value of one nearest pixel, which makes the contrast between pixels more apparent. This creates a jaggedness, which would strengthen the aliasing effect. On the other hand, Bilinear Interpolation smooths this effect by a weighted average of the surrounding pixels, which allows an illusion that the original level of aliasing was retained.</p>
+  </div>
+
+  <p class="q">Speed vs. quality trade-offs</p>
+  <div class="notes">
+    <p>However, since NN just needs to assign the nearest neighbor, it is much faster compared to bilinear interpolation, which would need many more calculations per pixel.</p>
+  </div>
+</section>
+
+<!-- ---------------- A.4 ---------------- -->
+<section id="a4">
+  <h2><span class="num">A.4</span> Blend the Images into a Mosaic</h2>
+
+  <h3 class="subhead">Procedure</h3>
+  <div class="notes">
+    <p>For all mosaics, I chose the middle image as the reference image and mosaiced images left and right to the reference image. Each pair (left &amp; middle, middle &amp; right) had their homography matrix computed.</p>
+    <p>Then, the size of the image plane that the pixels will be projected to is calculated using the min and max of the x and y from all projected corner pixels of the images. However, this could result in negative pixels, which is complemented by using a translation matrix warping later.</p>
+    <p>Once we found the size of the output plane, all images are projected onto the plane using inverse-warp with bilinear interpolation, which is then blended together.</p>
+    <p>To blend the images, I first applied a weighted average on the projected images. I did this by using the bwdist equivalent function in python scipy.ndimage.distance_transform_edt to smooth the alpha mask out by changing the values of each pixel to it’s distance to the nearest edge on the photo. This is applied to each photo’s alpha, then that new alpha mask is used as weight on how much it should be used in that output pixel.  Then the average of the weighted pixels is used to determine the final output.</p>
+    <p>However, when I did this, I noticed that any misalignments that happened left a fade in the image, as averaging them makes details show up twice (in different locations).</p>
+    <p>Hence the second method, 2-level Laplacian was implemented. This splits each image into low frequencies and high frequencies, then blend the two bands differently. The alpha masks are each calculated the same as the weighted average, but we then determine another mask, that for each pixel, the index of the image whose edge is farthest from that pixel is assigned. For the low frequencies, a weighted average is applied similarly like before as lower frequencies cover color and brightness, which is smoothed out over averaging. But for the higher frequencies, we only take the pixel that is from the image that has the farthest edge for that pixel. This disallows the doubling effect of pixels from simple weighted averaging.</p>
+    <p>The final image is blended low band plus a selective high band. We can see that in doe, the people that were originally doubled has disappeared.</p>
+  </div>
+
+  <h3 class="subhead">Mosaic 1: Doe Library</h3>
+  <div class="grid-3">
+    <figure><img src="media/src_doe_left.jpg" alt="Doe Library left" loading="lazy"><figcaption>Left &middot; doe_2</figcaption></figure>
+    <figure><img src="media/src_doe_middle.jpg" alt="Doe Library middle" loading="lazy"><figcaption>Middle (reference) &middot; doe_1</figcaption></figure>
+    <figure><img src="media/src_doe_right.jpg" alt="Doe Library right" loading="lazy"><figcaption>Right &middot; doe_6</figcaption></figure>
+  </div>
+  <div class="grid-2">
+    <figure><img src="media/mosaic_doe_avg.jpg" alt="Doe Library mosaic, weighted average" loading="lazy"><figcaption>Weighted average</figcaption></figure>
+    <figure><img src="media/mosaic_doe_2level.jpg" alt="Doe Library mosaic, 2-level blending" loading="lazy"><figcaption>2-level blending</figcaption></figure>
+  </div>
+
+  <h3 class="subhead">Mosaic 2: Building</h3>
+  <div class="grid-3">
+    <figure><img src="media/src_building_left.jpg" alt="Building left" loading="lazy"><figcaption>Left &middot; building_3</figcaption></figure>
+    <figure><img src="media/src_building_middle.jpg" alt="Building middle" loading="lazy"><figcaption>Middle (reference) &middot; building_2</figcaption></figure>
+    <figure><img src="media/src_building_right.jpg" alt="Building right" loading="lazy"><figcaption>Right &middot; building_4</figcaption></figure>
+  </div>
+  <div class="grid-2">
+    <figure><img src="media/mosaic_building_avg.jpg" alt="Building mosaic, weighted average" loading="lazy"><figcaption>Weighted average</figcaption></figure>
+    <figure><img src="media/mosaic_building_2level.jpg" alt="Building mosaic, 2-level blending" loading="lazy"><figcaption>2-level blending</figcaption></figure>
+  </div>
+
+  <h3 class="subhead">Mosaic 3: Gateway</h3>
+  <div class="grid-3">
+    <figure><img src="media/src_gateway_left.jpg" alt="Gateway left" loading="lazy"><figcaption>Left &middot; gateway_2</figcaption></figure>
+    <figure><img src="media/src_gateway_middle.jpg" alt="Gateway middle" loading="lazy"><figcaption>Middle (reference) &middot; gateway_1</figcaption></figure>
+    <figure><img src="media/src_gateway_right.jpg" alt="Gateway right" loading="lazy"><figcaption>Right &middot; gateway_4</figcaption></figure>
+  </div>
+  <div class="grid-2">
+    <figure><img src="media/mosaic_gateway_avg.jpg" alt="Gateway mosaic, weighted average" loading="lazy"><figcaption>Weighted average</figcaption></figure>
+    <figure><img src="media/mosaic_gateway_2level.jpg" alt="Gateway mosaic, 2-level blending" loading="lazy"><figcaption>2-level blending</figcaption></figure>
+  </div>
+
+  <h3 class="subhead">Mosaic 4: Sather Gate</h3>
+  <div class="grid-3">
+    <figure><img src="media/src_sather_gate_left.jpg" alt="Sather Gate left" loading="lazy"><figcaption>Left &middot; sather_gate_2</figcaption></figure>
+    <figure><img src="media/src_sather_gate_middle.jpg" alt="Sather Gate middle" loading="lazy"><figcaption>Middle (reference) &middot; sather_gate_1</figcaption></figure>
+    <figure><img src="media/src_sather_gate_right.jpg" alt="Sather Gate right" loading="lazy"><figcaption>Right &middot; sather_gate_4</figcaption></figure>
+  </div>
+  <div class="grid-2">
+    <figure><img src="media/mosaic_sather_gate_avg.jpg" alt="Sather Gate mosaic, weighted average" loading="lazy"><figcaption>Weighted average</figcaption></figure>
+    <figure><img src="media/mosaic_sather_gate_2level.jpg" alt="Sather Gate mosaic, 2-level blending" loading="lazy"><figcaption>2-level blending</figcaption></figure>
+  </div>
+  <div class="notes">
+    <p>The difference is clearer in this example, where the walking people are more visually doubled in the weighted average example.</p>
+  </div>
+</section>
+
+<!-- ---------------- A.5 ---------------- -->
+<section id="a5">
+  <h2><span class="num">A.5</span> Bells &amp; Whistles <span class="tag">CS280A</span></h2>
+
+  <h3 class="subhead">Procedure</h3>
+  <div class="notes">
+    <p>Since the straight edges of the images become curved on a cylinder, I sampled points along each edge and transformed with the homography matrix and then projected them onto a cylinder to determine the output plane size. Then I used inverse cylindrical mapping and the inverse homography to trace each output pixel back to its source image, where bilinear interpolation was used like before to calculate the value of the pixel. The resulting three cylindrical images were then blended with the same 2-level Laplacian method.</p>
+  </div>
+
+  <h3 class="subhead">Choosing the focal length: Doe Library</h3>
+  <div class="grid-3">
+    <figure><img src="media/cyl_doe_f2000.jpg" alt="Doe Library cylindrical mosaic, f = 2000" loading="lazy"><figcaption>f = 2000</figcaption></figure>
+    <figure><img src="media/cyl_doe_f3000.jpg" alt="Doe Library cylindrical mosaic, f = 3000" loading="lazy"><figcaption>f = 3000</figcaption></figure>
+    <figure><img src="media/cyl_doe_f4000.jpg" alt="Doe Library cylindrical mosaic, f = 4000" loading="lazy"><figcaption>f = 4000</figcaption></figure>
+  </div>
+  <div class="notes">
+    <p>I pick focal length of 4000 as the edges of the image are less round, which allows the ground to be less distorted.</p>
+  </div>
+
+  <h3 class="subhead">Planar vs. cylindrical: Doe Library</h3>
+  <div class="grid-2">
+    <figure><img src="media/mosaic_doe_2level.jpg" alt="Doe Library planar mosaic" loading="lazy"><figcaption>Planar</figcaption></figure>
+    <figure><img src="media/cyl_doe_f4000.jpg" alt="Doe Library cylindrical mosaic, f = 4000" loading="lazy"><figcaption>Cylindrical (f = 4000)</figcaption></figure>
+  </div>
+</section>
+
+</main>
+
+<footer>Hanjoo Kim &middot; CS280A Fall 2026</footer>
+
+<div id="lightbox" role="dialog" aria-label="Enlarged image"><img alt=""></div>
+<script>
+  (function () {
+    var box = document.getElementById('lightbox');
+    var big = box.querySelector('img');
+    document.querySelectorAll('main figure img').forEach(function (img) {
+      img.addEventListener('click', function () {
+        big.src = img.src;
+        big.alt = img.alt;
+        box.classList.add('open');
+      });
+    });
+    function close() { box.classList.remove('open'); big.src = ''; }
+    box.addEventListener('click', close);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  })();
+</script>
+</body>
+</html>
