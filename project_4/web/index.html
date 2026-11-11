@@ -521,6 +521,7 @@
 
   <div class="notes">
     <p>Corners and descriptors were computed on images downscaled to 0.25 for speed and so that the fixed 40x40 window covers a meaningful region as the 40x40 descriptor on the original image would be on too fine details.</p>
+    <p>For speed, ANMS was run on the 5000 strongest Harris corners instead of all corners, which is still far more than the resulting 500 corners it keeps.</p>
   </div>
 
   <h3 class="subhead">Corners with and without ANMS: doe_2</h3>
@@ -545,6 +546,7 @@
   <h3 class="subhead">Parameters</h3>
   <div class="notes">
     <div class="cfg">ratio threshold (squared distances) = 0.5</div>
+    <p>0.5 was chosen based on Figure 6b of the paper. Below about 0.5 most matches are correct, while incorrect matches rise sharply above about 0.6.</p>
   </div>
 
   <h3 class="subhead">Matched features: doe_2 &harr; doe_1</h3>
