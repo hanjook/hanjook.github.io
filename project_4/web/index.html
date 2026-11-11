@@ -292,7 +292,7 @@
 <header class="hero">
   <a class="back" href="../../index.html">&larr; Back to Portfolio</a>
   <h1>Image Warping and Mosaicing</h1>
-  <p class="subtitle">CS180 / CS280A &middot; Project 4 (Part A)</p>
+  <p class="subtitle">CS180 / CS280A &middot; Project 4 (Parts A &amp; B)</p>
   <p class="byline">Hanjoo Kim</p>
 </header>
 
@@ -305,6 +305,13 @@
     <a href="#a3-rect">Rectification</a>
     <a href="#a4">A.4 Mosaics</a>
     <a href="#a5">A.5 B&amp;W</a>
+    <span class="sep">|</span>
+    <a class="lbl" href="#part-b">Part B</a>
+    <a href="#b1">B.1 Harris</a>
+    <a href="#b2">B.2 Descriptors</a>
+    <a href="#b3">B.3 Matching</a>
+    <a href="#b4">B.4 RANSAC</a>
+    <a href="#b5">B.5 B&amp;W</a>
   </div>
 </nav>
 
@@ -498,6 +505,151 @@
   <div class="grid-2">
     <figure><img src="media/mosaic_doe_2level.jpg" alt="Doe Library planar mosaic" loading="lazy"><figcaption>Planar</figcaption></figure>
     <figure><img src="media/cyl_doe_f4000.jpg" alt="Doe Library cylindrical mosaic, f = 4000" loading="lazy"><figcaption>Cylindrical (f = 4000)</figcaption></figure>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- PART B                                                            -->
+<!-- Source figures are in project_4/part_b/results/. Export web-sized  -->
+<!-- JPGs into media/ under the file names shown in each placeholder.   -->
+<!-- ================================================================ -->
+<h1 class="part-title" id="part-b">Part B: Feature Matching for Autostitching</h1>
+
+<!-- ---------------- B.1 ---------------- -->
+<section id="b1">
+  <h2><span class="num">B.1</span> Harris Corner Detection</h2>
+
+  <div class="notes">
+    <p>Corners and descriptors were computed on images downscaled to 0.25 for speed and so that the fixed 40x40 window covers a meaningful region as the 40x40 descriptor on the original image would be on too fine details.</p>
+  </div>
+
+  <h3 class="subhead">Corners with and without ANMS: doe_2</h3>
+  <figure class="fig-full"><img src="media/b1_doe_2_corners.png" alt="doe_2 Harris corners: all, strongest 500, ANMS 500" loading="lazy"><figcaption><strong>Without ANMS:</strong> all Harris corners (left), strongest 500 (middle) &middot; <strong>With ANMS:</strong> 500 corners (right)</figcaption></figure>
+  <div class="notes">
+    <p>When only checking the top 500 corners in strength, they tend to be dense in particular areas (on the buildings, which have more defined structures). However, after applying the ANMS method, we can see that the corners picked are evenly spread around the image, which are local maxima of that area.</p>
+  </div>
+</section>
+
+<!-- ---------------- B.2 ---------------- -->
+<section id="b2">
+  <h2><span class="num">B.2</span> Feature Descriptor Extraction</h2>
+
+  <h3 class="subhead">Extracted features: doe_2</h3>
+  <figure class="fig-narrow"><img src="media/b2_doe_2_descriptors.png" alt="doe_2 corner locations, 40x40 patches and normalized 8x8 descriptors" loading="lazy"><figcaption><strong>Left:</strong> corner location (red box = 40&times;40 window) &middot; <strong>Middle:</strong> 40&times;40 patch &middot; <strong>Right:</strong> normalized 8&times;8 descriptor</figcaption></figure>
+</section>
+
+<!-- ---------------- B.3 ---------------- -->
+<section id="b3">
+  <h2><span class="num">B.3</span> Feature Matching</h2>
+
+  <h3 class="subhead">Parameters</h3>
+  <div class="notes">
+    <div class="cfg">ratio threshold (squared distances) = 0.5</div>
+  </div>
+
+  <h3 class="subhead">Matched features: doe_2 &harr; doe_1</h3>
+  <figure class="fig-full"><img src="media/b3_doe_matches.png" alt="doe_2 to doe_1 matches before RANSAC" loading="lazy"><figcaption>All 75 matches after the ratio test (before RANSAC)</figcaption></figure>
+  <div class="notes">
+    <p>While most of the matches point to the almost same horizontal direction, there are visible outliers that start from the Campanile, which isn’t in doe_1. Also, there are incorrect matches due to the repetitive windows on the Doe Library. These are filtered out in the next section using the RANSAC algorithm.</p>
+  </div>
+</section>
+
+<!-- ---------------- B.4 ---------------- -->
+<section id="b4">
+  <h2><span class="num">B.4</span> RANSAC for Robust Homography</h2>
+
+  <h3 class="subhead">Parameters</h3>
+  <div class="notes">
+    <div class="cfg">iterations = 1000 &middot; threshold = 8 px (full resolution)</div>
+  </div>
+
+  <h3 class="subhead">Matches after RANSAC: doe_2 &harr; doe_1</h3>
+  <figure class="fig-full"><img src="media/b4_doe_matches_ransac.png" alt="doe_2 to doe_1 RANSAC inliers" loading="lazy"><figcaption>48 inliers kept by RANSAC</figcaption></figure>
+
+  <table class="data">
+    <tr><th>Set</th><th>Pair</th><th>Matches (ratio test &lt; 0.5)</th><th>RANSAC inliers (&lt; 8 px)</th></tr>
+    <tr><td>Doe Library</td><td>left &harr; middle</td><td>75</td><td>48</td></tr>
+    <tr><td>Doe Library</td><td>middle &harr; right</td><td>33</td><td>21</td></tr>
+    <tr><td>Gateway</td><td>left &harr; middle</td><td>51</td><td>21</td></tr>
+    <tr><td>Gateway</td><td>middle &harr; right</td><td>44</td><td>18</td></tr>
+    <tr><td>Building</td><td>left &harr; middle</td><td>117</td><td>79</td></tr>
+    <tr><td>Building</td><td>middle &harr; right</td><td>49</td><td>37</td></tr>
+  </table>
+
+  <h3 class="subhead">Manual vs. automatic stitching</h3>
+
+  <h3 class="subhead">Mosaic 1: Doe Library</h3>
+  <div class="grid-2">
+    <figure><img src="media/mosaic_doe_2level.jpg" alt="Doe Library mosaic, manual correspondences" loading="lazy"><figcaption>Manual (Part A)</figcaption></figure>
+    <figure><img src="media/b4_doe_auto_2level.jpg" alt="Doe Library mosaic, automatic correspondences" loading="lazy"><figcaption>Automatic (Part B)</figcaption></figure>
+  </div>
+
+  <h3 class="subhead">Mosaic 2: Gateway</h3>
+  <div class="grid-2">
+    <figure><img src="media/mosaic_gateway_2level.jpg" alt="Gateway mosaic, manual correspondences" loading="lazy"><figcaption>Manual (Part A)</figcaption></figure>
+    <figure><img src="media/b4_gateway_auto_2level.jpg" alt="Gateway mosaic, automatic correspondences" loading="lazy"><figcaption>Automatic (Part B)</figcaption></figure>
+  </div>
+
+  <h3 class="subhead">Mosaic 3: Building</h3>
+  <div class="grid-2">
+    <figure><img src="media/mosaic_building_2level.jpg" alt="Building mosaic, manual correspondences" loading="lazy"><figcaption>Manual (Part A)</figcaption></figure>
+    <figure><img src="media/b4_building_auto_2level.jpg" alt="Building mosaic, automatic correspondences" loading="lazy"><figcaption>Automatic (Part B)</figcaption></figure>
+  </div>
+
+  <h3 class="subhead">Comparison</h3>
+  <div class="notes">
+    <p>Visually, the automatic mosaics are as well aligned as the manual ones. Any remaining ghosting comes from people moving between shots, not from the alignment. The main visible difference is the overall shape of the canvas, since the two methods estimate slightly different homographies. Automatic stitching also used more correspondences than my hand-clicked points (79 vs 24 for Building left-middle) that are spread evenly, which changed the computed homography.</p>
+  </div>
+
+</section>
+
+<!-- ---------------- B.5 ---------------- -->
+<section id="b5">
+  <h2><span class="num">B.5</span> Bells &amp; Whistles: Multiscale Processing <span class="tag">CS280A</span></h2>
+
+  <h3 class="subhead">Procedure</h3>
+  <div class="notes">
+    <p>I implemented the multiscale processing option. For each image, I built a Gaussian pyramid (blur with sigma=1, then downsample by 2) with four levels at scales 0.5, 0.25, 0.125 and 0.0625. At every level I:</p>
+    <ul>
+      <li>Detected Harris corners</li>
+      <li>Applied ANMS to the detected corners</li>
+      <li>Extracted feature descriptors</li>
+      <li>Mapped the corner coordinates back to the original image scale.</li>
+    </ul>
+    <p>Features from all levels were matched together, and a single RANSAC estimated the homography used for the mosaic.</p>
+    <div class="cfg">levels = 4 (scales 0.5, 0.25, 0.125, 0.0625) &middot; 500 ANMS corners per level</div>
+  </div>
+
+  <h3 class="subhead">ANMS corners at each level: doe_2 &amp; doe_1</h3>
+  <div class="grid-2">
+    <figure><img src="media/b5_doe_corners_s0.5.png" alt="ANMS corners at scale 0.5" loading="lazy"><figcaption>Scale 0.5 (2016 &times; 1512)</figcaption></figure>
+    <figure><img src="media/b5_doe_corners_s0.25.png" alt="ANMS corners at scale 0.25" loading="lazy"><figcaption>Scale 0.25 (1008 &times; 756)</figcaption></figure>
+    <figure><img src="media/b5_doe_corners_s0.125.png" alt="ANMS corners at scale 0.125" loading="lazy"><figcaption>Scale 0.125 (504 &times; 378)</figcaption></figure>
+    <figure><img src="media/b5_doe_corners_s0.0625.png" alt="ANMS corners at scale 0.0625" loading="lazy"><figcaption>Scale 0.0625 (252 &times; 189)</figcaption></figure>
+  </div>
+
+  <h3 class="subhead">Single-scale vs. multiscale</h3>
+  <table class="data">
+    <tr><th>Set</th><th>Pair</th><th>Single-scale (matches &rarr; inliers)</th><th>Multiscale (matches &rarr; inliers)</th></tr>
+    <tr><td>Doe Library</td><td>left &harr; middle</td><td>75 &rarr; 48</td><td>305 &rarr; 201</td></tr>
+    <tr><td>Doe Library</td><td>middle &harr; right</td><td>33 &rarr; 21</td><td>109 &rarr; 59</td></tr>
+  </table>
+  <div class="notes">
+    <p>We can see that on the Doe left–middle pair (doe_2 &harr; doe_1), multiscale found about 4x more matches and inliers than the single-scale pipeline (75 &rarr; 305 matches, 48 &rarr; 201 inliers), although some of these are the same corner detected on different levels.</p>
+  </div>
+
+  <div class="grid-2">
+    <figure><img src="media/b4_doe_matches_ransac.png" alt="Single-scale RANSAC inliers, doe_2 to doe_1" loading="lazy"><figcaption>Single-scale: 48 inliers</figcaption></figure>
+    <figure><img src="media/b5_doe_matches_ransac.png" alt="Multiscale RANSAC inliers, doe_2 to doe_1" loading="lazy"><figcaption>Multiscale: 201 inliers</figcaption></figure>
+  </div>
+
+  <h3 class="subhead">Multiscale mosaic: Doe Library</h3>
+  <div class="grid-2">
+    <figure><img src="media/b4_doe_auto_2level.jpg" alt="Doe Library single-scale automatic mosaic" loading="lazy"><figcaption>Single-scale automatic</figcaption></figure>
+    <figure><img src="media/b5_doe_auto_2level.jpg" alt="Doe Library multiscale automatic mosaic" loading="lazy"><figcaption>Multiscale automatic</figcaption></figure>
+  </div>
+  <div class="notes">
+    <p>Visually there seems to be no difference observable between the two autostitches. It seems that the single scale features were enough to constrain the homography well, hence the extra inliers in the multiscale only refined it unnoticeably.</p>
   </div>
 </section>
 
